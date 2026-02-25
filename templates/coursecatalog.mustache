@@ -11,7 +11,7 @@
             <form method="get" action="{{sort.action}}">
                 <input type="hidden" name="slug" value="{{sort.slug}}">
                 <div class="ecl-form-group ecl-u-d-flex ecl-u-align-items-center">
-                    <label for="select-sortby" id="select-sortby-label" class="ecl-form-label ecl-u-mr-l">{{#str}}sortby, local_course_category_page{{/str}}</label>
+                    <label for="select-sortby" id="select-sortby-label" class="ecl-form-label ecl-u-mr-l">{{#str}}sortby, local_coursecatalog{{/str}}</label>
                     <div class="ecl-select__container ecl-select__container--m ecl-u-mt-none sortby-select">
                         <select class="ecl-select" data-ecl-auto-init="Select" id="select-sortby" name="sort" onchange="this.form.submit()">
                             {{#sort.options}}
@@ -21,7 +21,7 @@
                         <div class="ecl-select__icon">
                             <button class="ecl-button ecl-button--ghost ecl-button--icon-only" type="button" tabindex="-1">
                                 <span class="ecl-button__container">
-                                    <span class="ecl-button__label" data-ecl-label="true">{{#str}}toggledropdown, local_course_category_page{{/str}}</span>
+                                    <span class="ecl-button__label" data-ecl-label="true">{{#str}}toggledropdown, local_coursecatalog{{/str}}</span>
                                     {{#ecl_icon}}corner-arrow, xs, ecl-icon--rotate-180 ecl-button__icon{{/ecl_icon}}
                                 </span>
                             </button>
@@ -45,7 +45,7 @@
             <div class="ecl-content-block ecl-content-item__content-block" data-ecl-auto-init="ContentBlock" data-ecl-content-block="">
                 {{#duration}}
                     <ul class="ecl-content-block__primary-meta-container">
-                        <li class="ecl-content-block__primary-meta-item">{{#str}}duration, local_course_category_page{{/str}}: <strong>{{duration}}</strong></li>
+                        <li class="ecl-content-block__primary-meta-item">{{#str}}duration, local_coursecatalog{{/str}}: <strong>{{duration}}</strong></li>
                     </ul>
                 {{/duration}}
 
@@ -61,7 +61,7 @@
 
                 <div class="ecl-content-block__list-container">
                     <dl class="ecl-description-list ecl-description-list--horizontal ecl-content-block__list">
-                        <dt class="ecl-description-list__term ecl-u-mt-s">{{#str}}level, local_course_category_page{{/str}}</dt>
+                        <dt class="ecl-description-list__term ecl-u-mt-s">{{#str}}level, local_coursecatalog{{/str}}</dt>
                         <dd class="ecl-description-list__definition ecl-u-mt-s ecl-description-list__definition--comma-separated">
                             {{#level}}
                                 {{#.}}
@@ -70,17 +70,17 @@
                             {{/level}}
                         </dd>
 
-                        <dt class="ecl-description-list__term ecl-u-mt-s">{{#str}}content, local_course_category_page{{/str}}</dt>
+                        <dt class="ecl-description-list__term ecl-u-mt-s">{{#str}}content, local_coursecatalog{{/str}}</dt>
                         <dd class="ecl-description-list__definition ecl-u-mt-s">{{modulescount}}, {{activitycount}}</dd>
 
-                        <dt class="ecl-description-list__term ecl-u-mt-s">{{#str}}theme, local_course_category_page{{/str}}</dt>
+                        <dt class="ecl-description-list__term ecl-u-mt-s">{{#str}}theme, local_coursecatalog{{/str}}</dt>
                         <dd class="ecl-description-list__definition ecl-u-mt-s">
                             <ul class="ecl-content-block__label-container ecl-u-mb-none">
                                 {{#theme}}<li class="ecl-content-block__label-item"><span class="ecl-label ecl-label--{{class}}">{{value}}</span></li>{{/theme}}
                             </ul>
                         </dd>
 
-                        <dt class="ecl-description-list__term ecl-u-mt-s">{{#str}}audience, local_course_category_page{{/str}}</dt>
+                        <dt class="ecl-description-list__term ecl-u-mt-s">{{#str}}audience, local_coursecatalog{{/str}}</dt>
                         <dd class="ecl-description-list__definition ecl-u-mt-s">{{#audience}}{{audience}}{{/audience}}</dd>
                     </dl>
                 </div>
@@ -89,6 +89,6 @@
     {{/courses}}
 
     {{^courses}}
-        <div class="alert">{{#str}}nocoursesinthiscategory, local_course_category_page{{/str}}</div>
+        <div class="alert">{{#str}}nocoursesinthiscategory, local_coursecatalog{{/str}}</div>
     {{/courses}}
 </div>

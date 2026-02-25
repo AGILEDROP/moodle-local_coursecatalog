@@ -17,7 +17,7 @@
 /**
  * Page for managing custom pages
  *
- * @package local_course_category_page
+ * @package local_coursecatalog
  * @copyright 2025, Matej <matej.pal@agiledrop.com>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,38 +29,38 @@ require_once(__DIR__.'/locallib.php');
 
 require_login();
 $syscontext = context_system::instance();
-require_capability('local/course_category_page:manage', $syscontext);
+require_capability('local/coursecatalog:manage', $syscontext);
 
 $id = required_param('id', PARAM_INT);
 
-$PAGE->set_url(new moodle_url('/local/course_category_page/edit.php', ['id' => $id]));
+$PAGE->set_url(new moodle_url('/local/coursecatalog/edit.php', ['id' => $id]));
 $PAGE->set_context($syscontext);
-$PAGE->set_title(get_string('editpage', 'local_course_category_page'));
-$PAGE->set_heading(get_string('editpage', 'local_course_category_page'));
+$PAGE->set_title(get_string('editpage', 'local_coursecatalog'));
+$PAGE->set_heading(get_string('editpage', 'local_coursecatalog'));
 
 global $DB;
 
-if (!$page = $DB->get_record('local_course_category_page', ['id' => $id], '*', IGNORE_MISSING)) {
+if (!$page = $DB->get_record('local_coursecatalog', ['id' => $id], '*', IGNORE_MISSING)) {
     print_error('invalidrecord', 'error');
 }
 
-$form = new \local_course_category_page\form\addpage_form(
+$form = new \local_coursecatalog\form\addpage_form(
         null,
         ['isupdate' => true] // tells the form to change the submit label...
 );
 
 if ($form->is_cancelled()) {
-    redirect(new moodle_url('/local/course_category_page/pages.php'));
+    redirect(new moodle_url('/local/coursecatalog/pages.php'));
 } else if ($data = $form->get_data()) {
     require_sesskey();
 
     // Ensure slug uniqueness excluding current record.
     if ($exists = $DB->record_exists_select(
-            'local_course_category_page',
+            'local_coursecatalog',
             'slug = :slug AND id <> :id',
             ['slug' => $data->slug, 'id' => $id]
     )) {
-        \core\notification::error(get_string('error:sluginuse', 'local_course_category_page'));
+        \core\notification::error(get_string('error:sluginuse', 'local_coursecatalog'));
         // Re-display form with posted values.
         $form->set_data($data);
     } else {
@@ -75,9 +75,9 @@ if ($form->is_cancelled()) {
                 'pagedescriptionformat' => $desc['format'] ?? FORMAT_HTML,
                 'timeupdated' => time(),
         ];
-        $DB->update_record('local_course_category_page', $update);
+        $DB->update_record('local_coursecatalog', $update);
         \core\notification::success(get_string('changessaved'));
-        redirect(new moodle_url('/local/course_category_page/pages.php'));
+        redirect(new moodle_url('/local/coursecatalog/pages.php'));
     }
 }
 

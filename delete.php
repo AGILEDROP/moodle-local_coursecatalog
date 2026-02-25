@@ -17,7 +17,7 @@
 /**
  * Delete a Course Category Page.
  *
- * @package   local_course_category_page
+ * @package   local_coursecatalog
  * @copyright  2025 Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -30,15 +30,15 @@ $id = required_param('id', PARAM_INT);
 
 require_login();
 $syscontext = context_system::instance();
-require_capability('local/course_category_page:manage', $syscontext);
+require_capability('local/coursecatalog:manage', $syscontext);
 
 // 1) Call your library function
 local_course_category_page_delete_page($id);
 
 // 2) Redirect back with a notice
 redirect(
-        new moodle_url('/local/course_category_page/pages.php'),
-        get_string('deletedsuccess', 'local_course_category_page'),
+        new moodle_url('/local/coursecatalog/pages.php'),
+        get_string('deletedsuccess', 'local_coursecatalog'),
         null,
         \core\output\notification::NOTIFY_SUCCESS
 );

@@ -17,7 +17,7 @@
 /**
  * Front-end script to display a generated Course Category Page.
  *
- * @package local_course_category_page
+ * @package local_coursecatalog
  * @copyright 2025, Matej <matej.pal@agiledrop.com>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -30,25 +30,25 @@ $slug = required_param('slug', PARAM_ALPHANUMEXT);
 global $DB, $OUTPUT;
 
 // 1) Load the record
-$page = $DB->get_record('local_course_category_page',
+$page = $DB->get_record('local_coursecatalog',
         ['slug' => $slug], '*', MUST_EXIST);
 
 // 2) Context & base login/cap checks
 $catcontext = context_coursecat::instance($page->course_category);
 require_login();
-require_capability('local/course_category_page:view', $catcontext);
+require_capability('local/coursecatalog:view', $catcontext);
 
 // 3) Handle the “disabled” flag
 if (empty($page->isenabled)) {
     // 3a) Ordinary users get a friendly landing page
-    if (!has_capability('local/course_category_page:manage', context_system::instance())) {
-        $PAGE->set_url(new moodle_url('/local/course_category_page/view.php', ['slug' => $slug]));
+    if (!has_capability('local/coursecatalog:manage', context_system::instance())) {
+        $PAGE->set_url(new moodle_url('/local/coursecatalog/view.php', ['slug' => $slug]));
         $PAGE->set_context($catcontext);
-        $PAGE->set_title(get_string('pluginname', 'local_course_category_page'));
-        $PAGE->set_heading(get_string('pluginname', 'local_course_category_page'));
+        $PAGE->set_title(get_string('pluginname', 'local_coursecatalog'));
+        $PAGE->set_heading(get_string('pluginname', 'local_coursecatalog'));
 
         echo $OUTPUT->header();
-        echo $OUTPUT->notification(get_string('pagenotenableduser', 'local_course_category_page'),
+        echo $OUTPUT->notification(get_string('pagenotenableduser', 'local_coursecatalog'),
                 \core\output\notification::NOTIFY_INFO);
         echo $OUTPUT->footer();
         exit;
@@ -60,7 +60,7 @@ if (empty($page->isenabled)) {
 }
 
 // 4) Normal page rendering
-$url = new moodle_url('/local/course_category_page/view.php', ['slug' => $slug]);
+$url = new moodle_url('/local/coursecatalog/view.php', ['slug' => $slug]);
 $PAGE->set_url($url);
 $PAGE->set_secondary_navigation(false);
 $PAGE->set_context($catcontext);
@@ -77,7 +77,7 @@ echo $OUTPUT->header();
 
 // 5) If a preview banner is needed:
 if (!empty($showpreviewbanner)) {
-    echo $OUTPUT->notification(get_string('previewdisablednotice', 'local_course_category_page'),
+    echo $OUTPUT->notification(get_string('previewdisablednotice', 'local_coursecatalog'),
             \core\output\notification::NOTIFY_WARNING);
 }
 

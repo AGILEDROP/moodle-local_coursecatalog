@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_course_category_page;
+namespace local_coursecatalog;
 
 use core\output\url_rewriter as rewriter;
 use moodle_url;
@@ -23,13 +23,13 @@ use coding_exception;
 /**
  * URL rewriter implementation for course category pages.
  *
- * @package   local_course_category_page
+ * @package   local_coursecatalog
  * @copyright 2024
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class url_rewriter implements rewriter {
     /** Table that stores category page settings. */
-    private const TABLE = 'local_course_category_page';
+    private const TABLE = 'local_coursecatalog';
     /** Base path from wwwroot (e.g. '' or '/academy/learn'). */
     private const ROOT_PATH_CACHE_KEY = 'local_course_category_page_root_path';
 
@@ -40,7 +40,7 @@ class url_rewriter implements rewriter {
      * @return moodle_url
      */
     public static function url_rewrite(moodle_url $url): moodle_url {
-        if ($url->get_path() === '/local/course_category_page/view.php') {
+        if ($url->get_path() === '/local/coursecatalog/view.php') {
             $slug = $url->get_param('slug');
             if ($slug && self::use_clean_url($slug)) {
                 return new moodle_url(self::get_base_path() . '/' . $slug);
@@ -81,14 +81,14 @@ class url_rewriter implements rewriter {
         global $PAGE;
 
         $path = $PAGE->url->get_path();
-        if ($path && !preg_match('#^/local/course_category_page/#', $path)) {
+        if ($path && !preg_match('#^/local/coursecatalog/#', $path)) {
             $base = self::get_base_path();
             if ($base !== '' && str_starts_with($path, $base . '/')) {
                 $path = substr($path, strlen($base));
             }
             $slug = trim($path, '/');
             if ($slug && self::use_clean_url($slug)) {
-                $PAGE->set_url('/local/course_category_page/view.php', ['slug' => $slug]);
+                $PAGE->set_url('/local/coursecatalog/view.php', ['slug' => $slug]);
             }
         }
     }

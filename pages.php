@@ -17,7 +17,7 @@
 /**
  * Page for managing custom pages
  *
- * @package local_course_category_page
+ * @package local_coursecatalog
  * @copyright 2025, Matej <matej.pal@agiledrop.com>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,15 +29,15 @@ require_once(__DIR__.'/locallib.php');
 
 require_login();
 $syscontext = context_system::instance();
-require_capability('local/course_category_page:manage', $syscontext);
+require_capability('local/coursecatalog:manage', $syscontext);
 
-$PAGE->set_url(new moodle_url('/local/course_category_page/pages.php'));
+$PAGE->set_url(new moodle_url('/local/coursecatalog/pages.php'));
 $PAGE->set_context($syscontext);
-$PAGE->set_title(get_string('managepages', 'local_course_category_page'));
-$PAGE->set_heading(get_string('managepages', 'local_course_category_page'));
+$PAGE->set_title(get_string('managepages', 'local_coursecatalog'));
+$PAGE->set_heading(get_string('managepages', 'local_coursecatalog'));
 
 // 1) Handle the add‐page form.
-$form = new \local_course_category_page\form\addpage_form();
+$form = new \local_coursecatalog\form\addpage_form();
 if ($form->is_cancelled()) {
     redirect($PAGE->url);
 } else if ($data = $form->get_data()) {
@@ -56,7 +56,7 @@ if ($form->is_cancelled()) {
         'showinprimarynavigation' => 0,
         'usecleanurls' => 0,
     ];
-    $DB->insert_record('local_course_category_page', $record);
+    $DB->insert_record('local_coursecatalog', $record);
     redirect($PAGE->url);
 }
 
@@ -76,20 +76,20 @@ foreach ($pages as $page) {
     // Title + created date.
     echo html_writer::tag('h3', format_string($page->name));
     echo html_writer::tag('small',
-            get_string('createdon', 'local_course_category_page',
+            get_string('createdon', 'local_coursecatalog',
                     userdate($page->timecreated)),
             ['class' => 'text-muted']
     );
 
     echo html_writer::tag('small',
-            get_string('lastgenerated', 'local_course_category_page',
+            get_string('lastgenerated', 'local_coursecatalog',
                     userdate($page->timeupdated)),
             ['class' => 'text-muted']
     );
 
     // Category & courses count.
     echo html_writer::tag('p',
-            get_string('coursecategory', 'local_course_category_page')
+            get_string('coursecategory', 'local_coursecatalog')
             .': '.$catlist[$page->course_category]
     );
     // Count only visible courses.
@@ -98,30 +98,30 @@ foreach ($pages as $page) {
             'visible' => 1,
     ]);
     echo html_writer::tag('p',
-            get_string('coursescount', 'local_course_category_page', $count)
+            get_string('coursescount', 'local_coursecatalog', $count)
     );
 
     // Slug & status.
     echo html_writer::tag('p',
-            get_string('urlslug', 'local_course_category_page')
+            get_string('urlslug', 'local_coursecatalog')
             .': /'.$page->slug
     );
 
     // Status.
     $statusbadge = !empty($page->isenabled)
-            ? '<span class="badge badge-success">'.get_string('enablepage','local_course_category_page').'</span>'
-            : '<span class="badge badge-secondary">'.get_string('disablepage','local_course_category_page').'</span>';
+            ? '<span class="badge badge-success">'.get_string('enablepage','local_coursecatalog').'</span>'
+            : '<span class="badge badge-secondary">'.get_string('disablepage','local_coursecatalog').'</span>';
 
     $navbadge = !empty($page->showinprimarynavigation)
-            ? '<span class="badge badge-success">'.get_string('navenabled','local_course_category_page').'</span>'
-            : '<span class="badge badge-secondary">'.get_string('navdisabled','local_course_category_page').'</span>';
+            ? '<span class="badge badge-success">'.get_string('navenabled','local_coursecatalog').'</span>'
+            : '<span class="badge badge-secondary">'.get_string('navdisabled','local_coursecatalog').'</span>';
 
     $cleanurlbadge = !empty($page->usecleanurls)
-            ? '<span class="badge badge-success">'.get_string('cleanurlsenabled','local_course_category_page').'</span>'
-            : '<span class="badge badge-secondary">'.get_string('cleanurlsdisabled','local_course_category_page').'</span>';
+            ? '<span class="badge badge-success">'.get_string('cleanurlsenabled','local_coursecatalog').'</span>'
+            : '<span class="badge badge-secondary">'.get_string('cleanurlsdisabled','local_coursecatalog').'</span>';
 
     echo html_writer::div(
-            get_string('status', 'local_course_category_page') . ': ' . $statusbadge . ' ' . $navbadge . ' ' . $cleanurlbadge,
+            get_string('status', 'local_coursecatalog') . ': ' . $statusbadge . ' ' . $navbadge . ' ' . $cleanurlbadge,
             'mb-2'
     );
 
@@ -130,20 +130,20 @@ foreach ($pages as $page) {
 
     echo html_writer::start_div();
     // 1) View page.
-    $viewurl = new moodle_url('/local/course_category_page/view.php', ['slug' => $page->slug]);
+    $viewurl = new moodle_url('/local/coursecatalog/view.php', ['slug' => $page->slug]);
     echo html_writer::link($viewurl,
-            get_string('viewpage', 'local_course_category_page'),
+            get_string('viewpage', 'local_coursecatalog'),
             ['class' => 'btn btn-primary btn-sm mr-2']
     );
 
     // 4) Enable/Disable the page.
-    $toggleenabledurl = new moodle_url('/local/course_category_page/toggle.php', [
+    $toggleenabledurl = new moodle_url('/local/coursecatalog/toggle.php', [
             'id' => $page->id,
             'isenabled' => empty($page->isenabled) ? 1 : 0,
     ]);
     $toggleenabledtext = empty($page->isenabled)
-            ? get_string('toggleenablepage', 'local_course_category_page')
-            : get_string('toggledisablepage', 'local_course_category_page');
+            ? get_string('toggleenablepage', 'local_coursecatalog')
+            : get_string('toggledisablepage', 'local_coursecatalog');
     $toggleenabledclasses = ['class' => 'btn btn-warning btn-sm mr-2'];
     // Disable the toggle button entirely if never generated.
     if (empty($page->timeupdated)) {
@@ -152,13 +152,13 @@ foreach ($pages as $page) {
     echo html_writer::link($toggleenabledurl, $toggleenabledtext, $toggleenabledclasses);
 
     // 5) Enable/Disable category page link in primary navigation.
-    $toggleenablenavigationurl = new moodle_url('/local/course_category_page/toggle.php', [
+    $toggleenablenavigationurl = new moodle_url('/local/coursecatalog/toggle.php', [
             'id' => $page->id,
             'showinprimarynavigation' => empty($page->showinprimarynavigation) ? 1 : 0,
     ]);
     $toggleenablenavigationtext = empty($page->showinprimarynavigation)
-            ? get_string('toggleenableinnavigation', 'local_course_category_page')
-            : get_string('toggledisableinnavigation', 'local_course_category_page');
+            ? get_string('toggleenableinnavigation', 'local_coursecatalog')
+            : get_string('toggledisableinnavigation', 'local_coursecatalog');
 
     $toggleenablenavigationclasses = ['class' => 'btn btn-info btn-sm mr-2'];
     if (empty($page->isenabled)) {
@@ -169,19 +169,19 @@ foreach ($pages as $page) {
     if (empty($page->isenabled) && !empty($page->showinprimarynavigation)) {
         echo html_writer::tag(
                 'small',
-                get_string('navnote_disabled', 'local_course_category_page'),
+                get_string('navnote_disabled', 'local_coursecatalog'),
                 ['class' => 'text-warning d-block mt-1']
         );
     }
 
     // 6) Enable/Disable clean urls.
-    $togglecleanurlsurl = new moodle_url('/local/course_category_page/toggle.php', [
+    $togglecleanurlsurl = new moodle_url('/local/coursecatalog/toggle.php', [
             'id' => $page->id,
             'usecleanurls' => empty($page->usecleanurls) ? 1 : 0,
     ]);
     $togglecleanurlstext = empty($page->usecleanurls)
-            ? get_string('togglecleanurlon', 'local_course_category_page')
-            : get_string('togglecleanurloff', 'local_course_category_page');
+            ? get_string('togglecleanurlon', 'local_coursecatalog')
+            : get_string('togglecleanurloff', 'local_coursecatalog');
 
     $togglecleanurlsclasses = ['class' => 'btn btn-dark btn-sm'];
     echo html_writer::link($togglecleanurlsurl, $togglecleanurlstext, $togglecleanurlsclasses);
@@ -190,16 +190,16 @@ foreach ($pages as $page) {
 
     echo html_writer::start_div();
     // 7) Edit button.
-    $editurl = new moodle_url('/local/course_category_page/edit.php', ['id' => $page->id]);
+    $editurl = new moodle_url('/local/coursecatalog/edit.php', ['id' => $page->id]);
     echo html_writer::link(
             $editurl,
-            get_string('editpage', 'local_course_category_page'),
+            get_string('editpage', 'local_coursecatalog'),
             ['class' => 'btn btn-secondary btn-sm mr-2']
     );
     // 8) Delete button.
     echo html_writer::link(
-            new moodle_url('/local/course_category_page/delete.php', ['id' => $page->id]),
-            get_string('delete', 'local_course_category_page'),
+            new moodle_url('/local/coursecatalog/delete.php', ['id' => $page->id]),
+            get_string('delete', 'local_coursecatalog'),
             ['class' => 'btn btn-danger btn-sm ml-auto']
     );
     echo html_writer::end_div();

@@ -17,12 +17,12 @@
 /**
  * Form for adding Moodle pages.
  *
- * @package   local_course_category_page
+ * @package   local_coursecatalog
  * @copyright 2025, Matej <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace local_course_category_page\form;
+namespace local_coursecatalog\form;
 
 use context_system;
 
@@ -33,7 +33,7 @@ require_once("$CFG->libdir/formslib.php");
 /**
  * Class addpage_form.
  *
- * This class defines the form used for adding pages in the local_course_category_page plugin.
+ * This class defines the form used for adding pages in the local_coursecatalog plugin.
  *
  * @copyright 2025, Matej <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -52,28 +52,28 @@ class addpage_form extends \moodleform {
         $mform->setType('id', PARAM_INT);
 
         // 1) Page name
-        $mform->addElement('text', 'name', get_string('pagename', 'local_course_category_page'));
+        $mform->addElement('text', 'name', get_string('pagename', 'local_coursecatalog'));
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
 
         // 2) URL slug
-        $mform->addElement('text', 'slug', get_string('pageslug', 'local_course_category_page'));
+        $mform->addElement('text', 'slug', get_string('pageslug', 'local_coursecatalog'));
         $mform->setType('slug', PARAM_ALPHANUMEXT);
         $mform->addRule('slug', null, 'required', null, 'client');
 
         // 3) Page description
         $editoroptions = ['maxfiles' => 0, 'maxbytes' => 0, 'context' => context_system::instance()];
-        $mform->addElement('editor', 'description', get_string('pagedescription', 'local_course_category_page'), null, $editoroptions);
+        $mform->addElement('editor', 'description', get_string('pagedescription', 'local_coursecatalog'), null, $editoroptions);
         $mform->setType('description', PARAM_RAW);
 
         // 4) Category dropdown
         $categories = \core_course_category::make_categories_list();
         $mform->addElement('select', 'course_category',
-                get_string('coursecategory', 'local_course_category_page'), $categories);
+                get_string('coursecategory', 'local_coursecatalog'), $categories);
         $mform->addRule('course_category', null, 'required', null, 'client');
 
         // Submit
-        $label = $isupdate ? get_string('savechanges') : get_string('addnewpage', 'local_course_category_page');
+        $label = $isupdate ? get_string('savechanges') : get_string('addnewpage', 'local_coursecatalog');
         $this->add_action_buttons(true, $label);
     }
 
@@ -82,16 +82,16 @@ class addpage_form extends \moodleform {
         $errors = parent::validation($data, $files);
 
         if (empty($data['id'])) {
-            if ($DB->record_exists('local_course_category_page', ['slug' => $data['slug']])) {
-                $errors['slug'] = get_string('error:sluginuse', 'local_course_category_page');
+            if ($DB->record_exists('local_coursecatalog', ['slug' => $data['slug']])) {
+                $errors['slug'] = get_string('error:sluginuse', 'local_coursecatalog');
             }
         } else {
             if ($DB->record_exists_select(
-                    'local_course_category_page',
+                    'local_coursecatalog',
                     'slug = :slug AND id <> :id',
                     ['slug' => $data['slug'], 'id' => $data['id']]
             )) {
-                $errors['slug'] = get_string('error:sluginuse', 'local_course_category_page');
+                $errors['slug'] = get_string('error:sluginuse', 'local_coursecatalog');
             }
         }
 

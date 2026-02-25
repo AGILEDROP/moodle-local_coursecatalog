@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die;
 
 $capabilities = [
-        'local/course_category_page:manage' => [
+        'local/coursecatalog:manage' => [
                 'riskbitmask'    => RISK_CONFIG,
                 'captype'        => 'write',
                 'contextlevel'   => CONTEXT_SYSTEM,
@@ -33,7 +33,7 @@ $capabilities = [
                         'manager'    => CAP_ALLOW,
                 ],
         ],
-        'local/course_category_page:view' => [
+        'local/coursecatalog:view' => [
                 'riskbitmask'    => RISK_PERSONAL,
                 'captype'        => 'read',
                 'contextlevel'   => CONTEXT_COURSECAT,

@@ -20,7 +20,7 @@
  * Depending on which parameter is passed (isenabled or showinprimarynavigation),
  * this script will flip that flag in the DB and return the appropriate success message.
  *
- * @package    local_course_category_page
+ * @package    local_coursecatalog
  * @copyright  2025 Matej Pal <matej.pal@agiledrop.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -36,7 +36,7 @@ $usecleanurls = optional_param('usecleanurls', null, PARAM_INT);
 
 require_login();
 $syscontext = context_system::instance();
-require_capability('local/course_category_page:manage', $syscontext);
+require_capability('local/coursecatalog:manage', $syscontext);
 
 global $DB;
 
@@ -46,28 +46,28 @@ $messages = [];
 if ($isenabled !== null) {
     $record->isenabled = $isenabled;
     $messages[] = $isenabled
-            ? get_string('enabledsuccess', 'local_course_category_page')
-            : get_string('disabledsuccess', 'local_course_category_page');
+            ? get_string('enabledsuccess', 'local_coursecatalog')
+            : get_string('disabledsuccess', 'local_coursecatalog');
 }
 if ($showinnav !== null) {
     $record->showinprimarynavigation = $showinnav;
     $messages[] = $showinnav
-            ? get_string('navenabledsuccess', 'local_course_category_page')
-            : get_string('navdisabledsuccess', 'local_course_category_page');
+            ? get_string('navenabledsuccess', 'local_coursecatalog')
+            : get_string('navdisabledsuccess', 'local_coursecatalog');
 }
 
 if ($usecleanurls !== null) {
     $record->usecleanurls = $usecleanurls;
     $messages[] = $usecleanurls
-            ? get_string('cleanurlsenabled', 'local_course_category_page')
-            : get_string('cleanurlsdisabled', 'local_course_category_page');
+            ? get_string('cleanurlsenabled', 'local_coursecatalog')
+            : get_string('cleanurlsdisabled', 'local_coursecatalog');
 }
 
 // Do the update (will update only the properties you set above).
-$DB->update_record('local_course_category_page', $record);
+$DB->update_record('local_coursecatalog', $record);
 
 // Redirect back with all messages joined.
 redirect(
-        new moodle_url('/local/course_category_page/pages.php'),
+        new moodle_url('/local/coursecatalog/pages.php'),
         implode(' ', $messages)
 );

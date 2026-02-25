@@ -17,7 +17,7 @@
 /**
  * Local course category page plugin - Core library functions
  *
- * @package local_course_category_page
+ * @package local_coursecatalog
  * @copyright 2025, Matej <matej.pal@agiledrop.com>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -49,7 +49,7 @@ function local_course_category_page_display_cards(stdClass $page): bool|string {
                 'pagedescription' => $page->pagedescription,
                 'sort' => local_course_category_page_build_sort_context($page->slug, $sort),
         ];
-        return $OUTPUT->render_from_template('local_course_category_page/category_page', $ctx);
+        return $OUTPUT->render_from_template('local_coursecatalog/category_page', $ctx);
     }
 
     // 2) Build the Mustache context.
@@ -94,8 +94,8 @@ function local_course_category_page_display_cards(stdClass $page): bool|string {
                 'courseimage' => $courseimageurl,
                 'summary' => format_text($c->summary, $c->summaryformat),
                 'buttontext' => $isenrolled
-                        ? get_string('start', 'local_course_category_page')
-                        : get_string('enrolme', 'local_course_category_page'),
+                        ? get_string('start', 'local_coursecatalog')
+                        : get_string('enrolme', 'local_coursecatalog'),
                 'buttonurl' => (
                 $isenrolled
                         ? new moodle_url('/course/view.php', ['id' => $c->id])
@@ -120,7 +120,7 @@ function local_course_category_page_display_cards(stdClass $page): bool|string {
 
     // 3) Render via Mustache.
     return $OUTPUT->render_from_template(
-            'local_course_category_page/category_page',
+            'local_coursecatalog/category_page',
             $ctx
     );
 }
@@ -132,7 +132,7 @@ function local_course_category_page_display_cards(stdClass $page): bool|string {
  */
 function local_course_category_page_get_all_pages() {
     global $DB;
-    return $DB->get_records('local_course_category_page', null, 'timecreated DESC');
+    return $DB->get_records('local_coursecatalog', null, 'timecreated DESC');
 }
 
 /**
@@ -144,7 +144,7 @@ function local_course_category_page_get_all_pages() {
  */
 function local_course_category_page_delete_by_category(int $categoryid) {
     global $DB;
-    $DB->delete_records('local_course_category_page', ['course_category' => $categoryid]);
+    $DB->delete_records('local_coursecatalog', ['course_category' => $categoryid]);
 }
 
 /**
@@ -156,7 +156,7 @@ function local_course_category_page_delete_by_category(int $categoryid) {
 function local_course_category_page_delete_page(int $id) {
     global $DB;
     // You could also clean up any generated files here if you wrote static HTML.
-    $DB->delete_records('local_course_category_page', ['id' => $id]);
+    $DB->delete_records('local_coursecatalog', ['id' => $id]);
 }
 
 
@@ -336,16 +336,16 @@ function local_course_category_page_get_course_count_string(int $coursescount, s
  * @return array
  */
 function local_course_category_page_build_sort_context(string $slug, string $current): array {
-    $baseurl  = new moodle_url('/local/course_category_page/view.php', ['slug' => $slug]);
+    $baseurl  = new moodle_url('/local/coursecatalog/view.php', ['slug' => $slug]);
     $options  = [
-            'name_asc' => get_string('sort_name_asc', 'local_course_category_page'),   // e.g. "Name (A–Z)"
-            'name_desc' => get_string('sort_name_desc','local_course_category_page'),
-            'duration_asc' => get_string('sort_duration_asc','local_course_category_page'),
-            'duration_desc' => get_string('sort_duration_desc','local_course_category_page'),
-            'modules_asc' => get_string('sort_modules_asc','local_course_category_page'),
-            'modules_desc' => get_string('sort_modules_desc','local_course_category_page'),
-            'level_asc' => get_string('sort_level_asc','local_course_category_page'),   // Beginner→Advanced
-            'level_desc' => get_string('sort_level_desc','local_course_category_page'),
+            'name_asc' => get_string('sort_name_asc', 'local_coursecatalog'),   // e.g. "Name (A–Z)"
+            'name_desc' => get_string('sort_name_desc','local_coursecatalog'),
+            'duration_asc' => get_string('sort_duration_asc','local_coursecatalog'),
+            'duration_desc' => get_string('sort_duration_desc','local_coursecatalog'),
+            'modules_asc' => get_string('sort_modules_asc','local_coursecatalog'),
+            'modules_desc' => get_string('sort_modules_desc','local_coursecatalog'),
+            'level_asc' => get_string('sort_level_asc','local_coursecatalog'),   // Beginner→Advanced
+            'level_desc' => get_string('sort_level_desc','local_coursecatalog'),
     ];
 
     $ctx = [
@@ -482,12 +482,12 @@ function local_course_category_page_parse_duration_minutes($s): int {
  * Build a localised label for the module/section or activity count.
  *
  * For modules, uses the language strings:
- *  - local_course_category_page:modulecount_singular
- *  - local_course_category_page:modulecount_plural
+ *  - local_coursecatalog:modulecount_singular
+ *  - local_coursecatalog:modulecount_plural
  *
  * For activities, uses the language strings:
- *  - local_course_category_page:activitycount_singular
- *  - local_course_category_page:activitycount_plural
+ *  - local_coursecatalog:activitycount_singular
+ *  - local_coursecatalog:activitycount_plural
  *
  * @param int $count Number of modules/sections or activities.
  * @param string $type Type of count: 'module' (default) or 'activity'.
@@ -498,8 +498,8 @@ function local_course_category_page_modules_label(int $count, string $type = 'mo
     $plural = $type === 'activity' ? 'activitycount_plural' : 'modulecount_plural';
     
     return $count . ' ' . ($count === 1 ?
-                    get_string($singular, 'local_course_category_page') :
-                    get_string($plural, 'local_course_category_page')
+                    get_string($singular, 'local_coursecatalog') :
+                    get_string($plural, 'local_coursecatalog')
             );
 }
 

@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Language configuration for the local_course_category_page plugin.
+ * Language configuration for the local_coursecatalog plugin.
  *
- * @package   local_course_category_page
+ * @package   local_coursecatalog
  * @copyright 2025, Matej <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -28,8 +28,8 @@ $string['audience'] = 'Audience: ';
 $string['cleanurlsdisabled'] = 'Clean URLs disabled';
 $string['cleanurlsenabled'] = 'Clean URLs enabled';
 $string['content'] = 'Content: ';
-$string['course_category_page:manage'] = 'Manage course category pages';
-$string['course_category_page:view'] = 'View course category pages';
+$string['coursecatalog:manage'] = 'Manage course category pages';
+$string['coursecatalog:view'] = 'View course category pages';
 $string['coursecategory'] = 'Course category';
 $string['coursescount'] = '{$a} visible course(s)';
 $string['createdon'] = 'Created on {$a}';
