@@ -199,10 +199,23 @@ foreach ($pages as $page) {
             ['class' => 'btn btn-secondary btn-sm mr-2']
     );
     // 8) Delete button.
+    $deleteurl = new moodle_url('/local/coursecatalog/delete.php', [
+        'id' => $page->id,
+        'sesskey' => $actionsesskey,
+    ]);
+
     echo html_writer::link(
-            new moodle_url('/local/coursecatalog/delete.php', ['id' => $page->id, 'sesskey' => $actionsesskey]),
-            get_string('delete', 'local_coursecatalog'),
-            ['class' => 'btn btn-danger btn-sm ml-auto']
+        $deleteurl,
+        get_string('delete', 'core'),
+        [
+            'class' => 'btn btn-danger btn-sm ml-auto',
+            'data-modal' => 'confirmation',
+            'data-modal-type' => 'delete',
+            'data-modal-title-str' => json_encode(['delete', 'core']),
+            'data-modal-content-str' => json_encode(['deletepageconfirm', 'local_coursecatalog', format_string($page->name)]),
+            'data-modal-yes-button-str' => json_encode(['delete', 'core']),
+            'data-modal-destination' => $deleteurl->out(false),
+        ]
     );
     echo html_writer::end_div();
 

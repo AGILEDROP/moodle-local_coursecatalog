@@ -55,22 +55,26 @@ class addpage_form extends \moodleform {
         $mform->addElement('text', 'name', get_string('pagename', 'local_coursecatalog'));
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
+        $mform->addHelpButton('name', 'pagename', 'local_coursecatalog');
 
         // 2) URL slug
         $mform->addElement('text', 'slug', get_string('pageslug', 'local_coursecatalog'));
         $mform->setType('slug', PARAM_ALPHANUMEXT);
         $mform->addRule('slug', null, 'required', null, 'client');
+        $mform->addHelpButton('slug', 'pageslug', 'local_coursecatalog');
 
         // 3) Page description
         $editoroptions = ['maxfiles' => 0, 'maxbytes' => 0, 'context' => context_system::instance()];
         $mform->addElement('editor', 'description', get_string('pagedescription', 'local_coursecatalog'), null, $editoroptions);
         $mform->setType('description', PARAM_RAW);
+        $mform->addHelpButton('description', 'pagedescription', 'local_coursecatalog');
 
         // 4) Category dropdown
         $categories = \core_course_category::make_categories_list();
         $mform->addElement('select', 'course_category',
                 get_string('coursecategory', 'local_coursecatalog'), $categories);
         $mform->addRule('course_category', null, 'required', null, 'client');
+        $mform->addHelpButton('course_category', 'coursecategory', 'local_coursecatalog');
 
         // Submit
         $label = $isupdate ? get_string('savechanges') : get_string('addnewpage', 'local_coursecatalog');
