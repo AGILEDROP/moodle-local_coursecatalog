@@ -43,13 +43,15 @@ if ($form->is_cancelled()) {
 } else if ($data = $form->get_data()) {
     global $DB;
     $desc = $data->description ?? ['text' => '', 'format' => FORMAT_HTML];
+    $descriptiontext = is_array($desc) && array_key_exists('text', $desc) ? $desc['text'] : '';
+    $descriptionformat = is_array($desc) && array_key_exists('format', $desc) ? (int)$desc['format'] : FORMAT_HTML;
 
     $record = (object)[
         'name' => $data->name,
         'slug' => $data->slug,
         'course_category' => $data->course_category,
-        'pagedescription' => $desc['text'],
-        'pagedescriptionformat' => $desc['format'] ?? FORMAT_HTML,
+        'pagedescription' => $descriptiontext,
+        'pagedescriptionformat' => $descriptionformat,
         'isenabled' => 0,
         'timecreated' => time(),
         'timeupdated' => time(),
@@ -66,12 +68,13 @@ echo $OUTPUT->header();
 $form->display();
 
 // 3) Fetch all pages.
-$pages  = local_course_category_page_get_all_pages();
+$pages  = local_coursecatalog_get_all_pages();
 $catlist = \core_course_category::make_categories_list();
 
-echo html_writer::start_div('category-page-cards');
+echo html_writer::start_div('course-catalog-cards');
 foreach ($pages as $page) {
     echo html_writer::start_div('card mb-2 p-3 border');
+    $actionsesskey = sesskey();
 
     // Title + created date.
     echo html_writer::tag('h3', format_string($page->name));
@@ -82,7 +85,7 @@ foreach ($pages as $page) {
     );
 
     echo html_writer::tag('small',
-            get_string('lastgenerated', 'local_coursecatalog',
+            get_string('lastupdated', 'local_coursecatalog',
                     userdate($page->timeupdated)),
             ['class' => 'text-muted']
     );
@@ -140,21 +143,19 @@ foreach ($pages as $page) {
     $toggleenabledurl = new moodle_url('/local/coursecatalog/toggle.php', [
             'id' => $page->id,
             'isenabled' => empty($page->isenabled) ? 1 : 0,
+            'sesskey' => $actionsesskey,
     ]);
     $toggleenabledtext = empty($page->isenabled)
             ? get_string('toggleenablepage', 'local_coursecatalog')
             : get_string('toggledisablepage', 'local_coursecatalog');
     $toggleenabledclasses = ['class' => 'btn btn-warning btn-sm mr-2'];
-    // Disable the toggle button entirely if never generated.
-    if (empty($page->timeupdated)) {
-        $toggleenabledclasses['class'] .= ' disabled';
-    }
     echo html_writer::link($toggleenabledurl, $toggleenabledtext, $toggleenabledclasses);
 
     // 5) Enable/Disable category page link in primary navigation.
     $toggleenablenavigationurl = new moodle_url('/local/coursecatalog/toggle.php', [
             'id' => $page->id,
             'showinprimarynavigation' => empty($page->showinprimarynavigation) ? 1 : 0,
+            'sesskey' => $actionsesskey,
     ]);
     $toggleenablenavigationtext = empty($page->showinprimarynavigation)
             ? get_string('toggleenableinnavigation', 'local_coursecatalog')
@@ -178,6 +179,7 @@ foreach ($pages as $page) {
     $togglecleanurlsurl = new moodle_url('/local/coursecatalog/toggle.php', [
             'id' => $page->id,
             'usecleanurls' => empty($page->usecleanurls) ? 1 : 0,
+            'sesskey' => $actionsesskey,
     ]);
     $togglecleanurlstext = empty($page->usecleanurls)
             ? get_string('togglecleanurlon', 'local_coursecatalog')
@@ -198,7 +200,7 @@ foreach ($pages as $page) {
     );
     // 8) Delete button.
     echo html_writer::link(
-            new moodle_url('/local/coursecatalog/delete.php', ['id' => $page->id]),
+            new moodle_url('/local/coursecatalog/delete.php', ['id' => $page->id, 'sesskey' => $actionsesskey]),
             get_string('delete', 'local_coursecatalog'),
             ['class' => 'btn btn-danger btn-sm ml-auto']
     );

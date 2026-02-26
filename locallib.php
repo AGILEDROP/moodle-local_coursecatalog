@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Local course category page plugin - Core library functions
+ * Local course catalog plugin - Core library functions
  *
  * @package local_coursecatalog
  * @copyright 2025, Matej <matej.pal@agiledrop.com>
@@ -33,10 +33,16 @@ use core_course\external\course_summary_exporter;
  * @throws \core\exception\moodle_exception
  * @throws coding_exception
  */
-function local_course_category_page_display_cards(stdClass $page): bool|string {
+function local_coursecatalog_display_cards(stdClass $page): bool|string {
     global $OUTPUT;
 
     $sort = optional_param('sort', 'level_asc', PARAM_ALPHANUMEXT); // name_asc|name_desc|duration_asc|...
+    $descriptioncontext = \context_coursecat::instance((int)$page->course_category, IGNORE_MISSING) ?: \context_system::instance();
+    $formatteddescription = format_text(
+            (string)($page->pagedescription ?? ''),
+            (int)($page->pagedescriptionformat ?? FORMAT_HTML),
+            ['context' => $descriptioncontext]
+    );
 
     // 1) Get the category object and its courses.
     $category = \core_course_category::get($page->course_category, IGNORE_MISSING);
@@ -45,11 +51,11 @@ function local_course_category_page_display_cards(stdClass $page): bool|string {
     if (empty($courses)) {
         $ctx = (object)[
                 'courses' => [],
-                'coursecount' => local_course_category_page_get_course_count_string(0, $page->name),
-                'pagedescription' => $page->pagedescription,
-                'sort' => local_course_category_page_build_sort_context($page->slug, $sort),
+                'coursecount' => local_coursecatalog_get_course_count_string(0, $page->name),
+                'pagedescription' => $formatteddescription,
+                'sort' => local_coursecatalog_build_sort_context($page->slug, $sort),
         ];
-        return $OUTPUT->render_from_template('local_coursecatalog/category_page', $ctx);
+        return $OUTPUT->render_from_template('local_coursecatalog/coursecatalog', $ctx);
     }
 
     // 2) Build the Mustache context.
@@ -59,7 +65,7 @@ function local_course_category_page_display_cards(stdClass $page): bool|string {
             continue;
         }
 
-        $coursecustomfields = local_course_category_page_fetch_course_customfields($c->id);
+        $coursecustomfields = local_coursecatalog_fetch_course_customfields($c->id);
 
         $customfields = [];
 
@@ -85,9 +91,9 @@ function local_course_category_page_display_cards(stdClass $page): bool|string {
         $courseimageurl = course_summary_exporter::get_course_image($c);
         $coursectx  = context_course::instance($c->id, IGNORE_MISSING);
         $isenrolled = $coursectx ? is_enrolled($coursectx) : false;
-        $modulescount = local_course_category_page_count_modules($c->id);
-        $activitycount = local_course_category_page_count_main_activities($c->id);
-        $duration_minutes = local_course_category_page_parse_duration_minutes($customfields['duration'] ?? '');
+        $modulescount = local_coursecatalog_count_modules($c->id);
+        $activitycount = local_coursecatalog_count_main_activities($c->id);
+        $duration_minutes = local_coursecatalog_parse_duration_minutes($customfields['duration'] ?? '');
 
         $base = [
                 'fullname' => format_string($c->fullname),
@@ -101,26 +107,26 @@ function local_course_category_page_display_cards(stdClass $page): bool|string {
                         ? new moodle_url('/course/view.php', ['id' => $c->id])
                         : new moodle_url('/enrol/index.php', ['id' => $c->id])
                 )->out(false),
-                'modulescount' => local_course_category_page_modules_label($modulescount),
+                'modulescount' => local_coursecatalog_modules_label($modulescount),
                 'modulescount_int' => $modulescount, // for sorting
-                'activitycount' => local_course_category_page_modules_label($activitycount, 'activity'),
+                'activitycount' => local_coursecatalog_modules_label($activitycount, 'activity'),
                 'duration_minutes' => $duration_minutes, // for sorting
         ];
 
         $ctx->courses[] = (object) ($customfields + $base);
     }
 
-    $ctx->courses = local_course_category_page_sort_courses($ctx->courses, $sort);
+    $ctx->courses = local_coursecatalog_sort_courses($ctx->courses, $sort);
 
 
-    $ctx->coursecount = local_course_category_page_get_course_count_string(count($ctx->courses), $page->name);
-    $ctx->pagedescription = $page->pagedescription;
+    $ctx->coursecount = local_coursecatalog_get_course_count_string(count($ctx->courses), $page->name);
+    $ctx->pagedescription = $formatteddescription;
 
-    $ctx->sort = local_course_category_page_build_sort_context($page->slug, $sort);
+    $ctx->sort = local_coursecatalog_build_sort_context($page->slug, $sort);
 
     // 3) Render via Mustache.
     return $OUTPUT->render_from_template(
-            'local_coursecatalog/category_page',
+            'local_coursecatalog/coursecatalog',
             $ctx
     );
 }
@@ -130,7 +136,7 @@ function local_course_category_page_display_cards(stdClass $page): bool|string {
  *
  * @return stdClass[] keyed by id
  */
-function local_course_category_page_get_all_pages() {
+function local_coursecatalog_get_all_pages() {
     global $DB;
     return $DB->get_records('local_coursecatalog', null, 'timecreated DESC');
 }
@@ -142,7 +148,7 @@ function local_course_category_page_get_all_pages() {
  * @param int $categoryid
  * @return void
  */
-function local_course_category_page_delete_by_category(int $categoryid) {
+function local_coursecatalog_delete_by_category(int $categoryid) {
     global $DB;
     $DB->delete_records('local_coursecatalog', ['course_category' => $categoryid]);
 }
@@ -153,9 +159,8 @@ function local_course_category_page_delete_by_category(int $categoryid) {
  * @param int $id
  * @return void
  */
-function local_course_category_page_delete_page(int $id) {
+function local_coursecatalog_delete_page(int $id) {
     global $DB;
-    // You could also clean up any generated files here if you wrote static HTML.
     $DB->delete_records('local_coursecatalog', ['id' => $id]);
 }
 
@@ -189,7 +194,7 @@ function local_course_category_page_delete_page(int $id) {
  * @param int $courseid Course ID.
  * @return array<string,mixed>
  */
-function local_course_category_page_fetch_course_customfields(int $courseid): array {
+function local_coursecatalog_fetch_course_customfields(int $courseid): array {
     // Fields that should always be normalized to array format (rendered as arrays in templates)
     $normalizeToArray = ['level', 'theme', 'format'];
     
@@ -244,7 +249,7 @@ function local_course_category_page_fetch_course_customfields(int $courseid): ar
  * @param int $courseid Moodle course id.
  * @return int Number of sections meeting the criteria.
  */
-function local_course_category_page_count_modules(int $courseid): int {
+function local_coursecatalog_count_modules(int $courseid): int {
     $modinfo = get_fast_modinfo($courseid);
     $sections = $modinfo->get_section_info_all();
 
@@ -316,7 +321,7 @@ function local_course_category_page_count_modules(int $courseid): int {
  * @param string|null $pagenamesingular  Optional singular form (e.g. "learning path").
  * @return string The label like "3 learning paths" or "1 learning path".
  */
-function local_course_category_page_get_course_count_string(int $coursescount, string $pagename, $pagenamesingular = null): string {
+function local_coursecatalog_get_course_count_string(int $coursescount, string $pagename, $pagenamesingular = null): string {
     $plural = core_text::strtolower(trim($pagename)); // e.g. "learning paths"
     // For the future:
     // Prefer an explicit singular name if you have it on $page (recommended for i18n).
@@ -335,7 +340,7 @@ function local_course_category_page_get_course_count_string(int $coursescount, s
  * @param string $current Current sort token (e.g. "name_asc").
  * @return array
  */
-function local_course_category_page_build_sort_context(string $slug, string $current): array {
+function local_coursecatalog_build_sort_context(string $slug, string $current): array {
     $baseurl  = new moodle_url('/local/coursecatalog/view.php', ['slug' => $slug]);
     $options  = [
             'name_asc' => get_string('sort_name_asc', 'local_coursecatalog'),   // e.g. "Name (A–Z)"
@@ -378,7 +383,7 @@ function local_course_category_page_build_sort_context(string $slug, string $cur
  * @param string $sort  Sort token.
  * @return array Sorted list.
  */
-function local_course_category_page_sort_courses(array $items, string $sort): array {
+function local_coursecatalog_sort_courses(array $items, string $sort): array {
     $allowed = ['name_asc','name_desc','duration_asc','duration_desc','modules_asc','modules_desc','level_asc','level_desc'];
     if (!in_array($sort, $allowed, true)) {
         $sort = 'name_asc';
@@ -436,18 +441,18 @@ function local_course_category_page_sort_courses(array $items, string $sort): ar
  * Parse a human duration string to total minutes.
  *
  * Supported formats (case-insensitive, spaces optional):
- *  - "H:MM"             e.g. "1:30"
- *  - "HhMM" / "Hh MM"   e.g. "4h25", "4h 25"
+ *  - "H:MM" e.g. "1:30"
+ *  - "HhMM" / "Hh MM" e.g. "4h25", "4h 25"
  *  - "Hh [M[m|min|mins|minute|minutes]]" e.g. "7h 30m", "7h 30min", "7 hours 30 minutes", "8h"
  *  - "Mm" / "M minutes" e.g. "90m", "30min", "30 minutes"
- *  - plain integer      e.g. "90" (interpreted as minutes)
+ *  - plain integer e.g. "90" (interpreted as minutes)
  *
  * Returns 0 for unrecognised strings.
  *
  * @param mixed $s Input string (or scalar) to parse.
  * @return int Total minutes.
  */
-function local_course_category_page_parse_duration_minutes($s): int {
+function local_coursecatalog_parse_duration_minutes($s): int {
     $s = core_text::strtolower(trim((string)$s));
     if ($s === '') { return 0; }
 
@@ -493,7 +498,7 @@ function local_course_category_page_parse_duration_minutes($s): int {
  * @param string $type Type of count: 'module' (default) or 'activity'.
  * @return string Localised label including the count.
  */
-function local_course_category_page_modules_label(int $count, string $type = 'module'): string {
+function local_coursecatalog_modules_label(int $count, string $type = 'module'): string {
     $singular = $type === 'activity' ? 'activitycount_singular' : 'modulecount_singular';
     $plural = $type === 'activity' ? 'activitycount_plural' : 'modulecount_plural';
     
@@ -512,7 +517,7 @@ function local_course_category_page_modules_label(int $count, string $type = 'mo
  * @param int $courseid Moodle course id.
  * @return int Number of main activities.
  */
-function local_course_category_page_count_main_activities(int $courseid): int {
+function local_coursecatalog_count_main_activities(int $courseid): int {
     $modinfo = get_fast_modinfo($courseid);
     $sections = $modinfo->get_section_info_all();
 

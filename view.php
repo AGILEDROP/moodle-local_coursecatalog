@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Front-end script to display a generated Course Category Page.
+ * Front-end script to display a course catalog.
  *
  * @package local_coursecatalog
  * @copyright 2025, Matej <matej.pal@agiledrop.com>
@@ -82,7 +82,7 @@ if (!empty($showpreviewbanner)) {
 }
 
 // 6) Output the HTML
-$html = local_course_category_page_display_cards($page);
+$html = local_coursecatalog_display_cards($page);
 echo $html;
 
 echo $OUTPUT->footer();

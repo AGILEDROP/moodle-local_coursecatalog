@@ -65,14 +65,16 @@ if ($form->is_cancelled()) {
         $form->set_data($data);
     } else {
         $desc = $data->description ?? ['text' => '', 'format' => FORMAT_HTML];
+        $descriptiontext = is_array($desc) && array_key_exists('text', $desc) ? $desc['text'] : '';
+        $descriptionformat = is_array($desc) && array_key_exists('format', $desc) ? (int)$desc['format'] : FORMAT_HTML;
 
         $update = (object)[
                 'id' => $id,
                 'name' => $data->name,
                 'slug' => $data->slug,
                 'course_category' => $data->course_category,
-                'pagedescription' => $desc['text'],
-                'pagedescriptionformat' => $desc['format'] ?? FORMAT_HTML,
+                'pagedescription' => $descriptiontext,
+                'pagedescriptionformat' => $descriptionformat,
                 'timeupdated' => time(),
         ];
         $DB->update_record('local_coursecatalog', $update);

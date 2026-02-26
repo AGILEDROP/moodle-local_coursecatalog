@@ -31,9 +31,10 @@ $id = required_param('id', PARAM_INT);
 require_login();
 $syscontext = context_system::instance();
 require_capability('local/coursecatalog:manage', $syscontext);
+require_sesskey();
 
 // 1) Call your library function
-local_course_category_page_delete_page($id);
+local_coursecatalog_delete_page($id);
 
 // 2) Redirect back with a notice
 redirect(

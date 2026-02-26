@@ -37,6 +37,7 @@ $usecleanurls = optional_param('usecleanurls', null, PARAM_INT);
 require_login();
 $syscontext = context_system::instance();
 require_capability('local/coursecatalog:manage', $syscontext);
+require_sesskey();
 
 global $DB;
 
@@ -44,12 +45,18 @@ global $DB;
 $record = (object)['id' => $id];
 $messages = [];
 if ($isenabled !== null) {
+    if (!in_array($isenabled, [0, 1], true)) {
+        throw new invalid_parameter_exception('Invalid value for isenabled');
+    }
     $record->isenabled = $isenabled;
     $messages[] = $isenabled
             ? get_string('enabledsuccess', 'local_coursecatalog')
             : get_string('disabledsuccess', 'local_coursecatalog');
 }
 if ($showinnav !== null) {
+    if (!in_array($showinnav, [0, 1], true)) {
+        throw new invalid_parameter_exception('Invalid value for showinprimarynavigation');
+    }
     $record->showinprimarynavigation = $showinnav;
     $messages[] = $showinnav
             ? get_string('navenabledsuccess', 'local_coursecatalog')
@@ -57,10 +64,17 @@ if ($showinnav !== null) {
 }
 
 if ($usecleanurls !== null) {
+    if (!in_array($usecleanurls, [0, 1], true)) {
+        throw new invalid_parameter_exception('Invalid value for usecleanurls');
+    }
     $record->usecleanurls = $usecleanurls;
     $messages[] = $usecleanurls
             ? get_string('cleanurlsenabled', 'local_coursecatalog')
             : get_string('cleanurlsdisabled', 'local_coursecatalog');
+}
+
+if (empty($messages)) {
+    throw new invalid_parameter_exception('No toggle field was provided');
 }
 
 // Do the update (will update only the properties you set above).

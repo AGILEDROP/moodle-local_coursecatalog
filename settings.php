@@ -31,7 +31,7 @@ if ($hassiteconfig) {
     ));
 
     $ADMIN->add('local_coursecatalog', new admin_externalpage(
-            'local_course_category_page_managepages',
+            'local_coursecatalog_managepages',
             get_string('managepages', 'local_coursecatalog'),
             new moodle_url('/local/coursecatalog/pages.php'),
             'local/coursecatalog:manage'

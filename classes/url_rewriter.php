@@ -21,7 +21,7 @@ use moodle_url;
 use coding_exception;
 
 /**
- * URL rewriter implementation for course category pages.
+ * URL rewriter implementation for course catalog.
  *
  * @package   local_coursecatalog
  * @copyright 2024
@@ -31,7 +31,7 @@ class url_rewriter implements rewriter {
     /** Table that stores category page settings. */
     private const TABLE = 'local_coursecatalog';
     /** Base path from wwwroot (e.g. '' or '/academy/learn'). */
-    private const ROOT_PATH_CACHE_KEY = 'local_course_category_page_root_path';
+    private const ROOT_PATH_CACHE_KEY = 'local_coursecatalog_root_path';
 
     /**
      * Rewrite moodle_urls into a shorter form when clean URLs are enabled.
