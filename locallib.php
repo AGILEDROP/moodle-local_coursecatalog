@@ -45,18 +45,22 @@ function local_coursecatalog_display_cards(stdClass $page): bool|string {
     );
 
     // 1) Get the category object and its courses.
-    $category = \core_course_category::get($page->course_category, IGNORE_MISSING);
-    $courses = $category->get_courses();
+    $categoryid = (int)$page->course_category;
+    $category = \core_course_category::get($categoryid, IGNORE_MISSING);
 
-    if (empty($courses)) {
+    if (!$category) {
         $ctx = (object)[
-                'courses' => [],
-                'coursecount' => local_coursecatalog_get_course_count_string(0, $page->name),
-                'pagedescription' => $formatteddescription,
-                'sort' => local_coursecatalog_build_sort_context($page->slug, $sort),
+            'courses' => [],
+            'coursecount' => local_coursecatalog_get_course_count_string(0, $page->name),
+            'pagedescription' => $formatteddescription,
+            'sort' => local_coursecatalog_build_sort_context($page->slug, $sort),
+            'missingcategory' => true,
         ];
+
         return $OUTPUT->render_from_template('local_coursecatalog/coursecatalog', $ctx);
     }
+
+    $courses = $category->get_courses();
 
     // 2) Build the Mustache context.
     $ctx = (object)['courses' => []];

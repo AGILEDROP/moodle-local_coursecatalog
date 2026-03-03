@@ -33,9 +33,16 @@ global $DB, $OUTPUT;
 $page = $DB->get_record('local_coursecatalog',
         ['slug' => $slug], '*', MUST_EXIST);
 
-// 2) Context & base login/cap checks
-$catcontext = context_coursecat::instance($page->course_category);
 require_login();
+
+// 2) Context & base login/cap checks
+$categoryid = (int)$page->course_category;
+$catcontext = context_coursecat::instance($categoryid, IGNORE_MISSING);
+
+if (!$catcontext) {
+    throw new moodle_exception('missingcategorypage', 'local_coursecatalog');
+}
+
 require_capability('local/coursecatalog:view', $catcontext);
 
 // 3) Handle the “disabled” flag

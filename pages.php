@@ -90,16 +90,22 @@ foreach ($pages as $page) {
             ['class' => 'text-muted']
     );
 
+    $categoryid = (int)$page->course_category;
+    $categoryexists = array_key_exists($categoryid, $catlist);
+    $categoryname = $categoryexists
+            ? $catlist[$categoryid]
+            : get_string('deletedcategorylabel', 'local_coursecatalog', $categoryid);
+
     // Category & courses count.
     echo html_writer::tag('p',
             get_string('coursecategory', 'local_coursecatalog')
-            .': '.$catlist[$page->course_category]
+            .': '.$categoryname
     );
     // Count only visible courses.
-    $count = $DB->count_records('course', [
-            'category' => $page->course_category,
+    $count = $categoryexists ? $DB->count_records('course', [
+            'category' => $categoryid,
             'visible' => 1,
-    ]);
+    ]) : 0;
     echo html_writer::tag('p',
             get_string('coursescount', 'local_coursecatalog', $count)
     );
