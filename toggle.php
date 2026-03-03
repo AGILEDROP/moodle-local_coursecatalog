@@ -57,11 +57,19 @@ if ($showinnav !== null) {
     if (!in_array($showinnav, [0, 1], true)) {
         throw new invalid_parameter_exception('Invalid value for showinprimarynavigation');
     }
+
+    $existing = $DB->get_record('local_coursecatalog', ['id' => $id], 'id, isenabled', MUST_EXIST);
+
+    if ((int)$showinnav === 1 && empty($existing->isenabled)) {
+        throw new moodle_exception('cannotenablenavwhendisabled', 'local_coursecatalog');
+    }
+
     $record->showinprimarynavigation = $showinnav;
     $messages[] = $showinnav
-            ? get_string('navenabledsuccess', 'local_coursecatalog')
-            : get_string('navdisabledsuccess', 'local_coursecatalog');
+        ? get_string('navenabledsuccess', 'local_coursecatalog')
+        : get_string('navdisabledsuccess', 'local_coursecatalog');
 }
+
 
 if ($usecleanurls !== null) {
     if (!in_array($usecleanurls, [0, 1], true)) {

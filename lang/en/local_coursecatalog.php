@@ -25,6 +25,7 @@
 $string['addnewpage'] = 'Add new page';
 $string['allowedroles'] = 'Allowed roles';
 $string['audience'] = 'Audience: ';
+$string['cannotenablenavwhendisabled'] = 'Enable the page before showing it in primary navigation.';
 $string['cleanurlsdisabled'] = 'Clean URLs disabled';
 $string['cleanurlsenabled'] = 'Clean URLs enabled';
 $string['content'] = 'Content: ';

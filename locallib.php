@@ -556,3 +556,17 @@ function local_coursecatalog_count_main_activities(int $courseid): int {
 
     return $activitycount;
 }
+
+/**
+ * Return pages eligible for primary navigation.
+ *
+ * @return array
+ */
+function local_coursecatalog_get_primary_navigation_pages(): array {
+    global $DB;
+
+    return $DB->get_records('local_coursecatalog', [
+        'isenabled' => 1,
+        'showinprimarynavigation' => 1,
+    ], 'name ASC');
+}

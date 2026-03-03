@@ -51,6 +51,7 @@ if (empty($page->isenabled)) {
     if (!has_capability('local/coursecatalog:manage', context_system::instance())) {
         $PAGE->set_url(new moodle_url('/local/coursecatalog/view.php', ['slug' => $slug]));
         $PAGE->set_context($catcontext);
+        $PAGE->set_primary_active_tab('local_coursecatalog_' . $page->id);
         $PAGE->set_title(get_string('pluginname', 'local_coursecatalog'));
         $PAGE->set_heading(get_string('pluginname', 'local_coursecatalog'));
 
