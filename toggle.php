@@ -32,7 +32,6 @@ $id = required_param('id', PARAM_INT);
 // Use optional_param so that passing 0 is distinct from not passing at all.
 $isenabled = optional_param('isenabled', null, PARAM_INT);
 $showinnav = optional_param('showinprimarynavigation', null, PARAM_INT);
-$usecleanurls = optional_param('usecleanurls', null, PARAM_INT);
 
 require_login();
 $syscontext = context_system::instance();
@@ -70,16 +69,6 @@ if ($showinnav !== null) {
         : get_string('navdisabledsuccess', 'local_coursecatalog');
 }
 
-
-if ($usecleanurls !== null) {
-    if (!in_array($usecleanurls, [0, 1], true)) {
-        throw new invalid_parameter_exception('Invalid value for usecleanurls');
-    }
-    $record->usecleanurls = $usecleanurls;
-    $messages[] = $usecleanurls
-            ? get_string('cleanurlsenabled', 'local_coursecatalog')
-            : get_string('cleanurlsdisabled', 'local_coursecatalog');
-}
 
 if (empty($messages)) {
     throw new invalid_parameter_exception('No toggle field was provided');

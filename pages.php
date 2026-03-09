@@ -56,7 +56,6 @@ if ($form->is_cancelled()) {
         'timecreated' => time(),
         'timeupdated' => time(),
         'showinprimarynavigation' => 0,
-        'usecleanurls' => 0,
     ];
     $DB->insert_record('local_coursecatalog', $record);
     redirect($PAGE->url);
@@ -125,12 +124,8 @@ foreach ($pages as $page) {
             ? '<span class="badge badge-success">'.get_string('navenabled','local_coursecatalog').'</span>'
             : '<span class="badge badge-secondary">'.get_string('navdisabled','local_coursecatalog').'</span>';
 
-    $cleanurlbadge = !empty($page->usecleanurls)
-            ? '<span class="badge badge-success">'.get_string('cleanurlsenabled','local_coursecatalog').'</span>'
-            : '<span class="badge badge-secondary">'.get_string('cleanurlsdisabled','local_coursecatalog').'</span>';
-
     echo html_writer::div(
-            get_string('status', 'local_coursecatalog') . ': ' . $statusbadge . ' ' . $navbadge . ' ' . $cleanurlbadge,
+            get_string('status', 'local_coursecatalog') . ': ' . $statusbadge . ' ' . $navbadge,
             'mb-2'
     );
 
@@ -180,19 +175,6 @@ foreach ($pages as $page) {
                 ['class' => 'text-warning d-block mt-1']
         );
     }
-
-    // 6) Enable/Disable clean urls.
-    $togglecleanurlsurl = new moodle_url('/local/coursecatalog/toggle.php', [
-            'id' => $page->id,
-            'usecleanurls' => empty($page->usecleanurls) ? 1 : 0,
-            'sesskey' => $actionsesskey,
-    ]);
-    $togglecleanurlstext = empty($page->usecleanurls)
-            ? get_string('togglecleanurlon', 'local_coursecatalog')
-            : get_string('togglecleanurloff', 'local_coursecatalog');
-
-    $togglecleanurlsclasses = ['class' => 'btn btn-dark btn-sm'];
-    echo html_writer::link($togglecleanurlsurl, $togglecleanurlstext, $togglecleanurlsclasses);
 
     echo html_writer::end_div();
 

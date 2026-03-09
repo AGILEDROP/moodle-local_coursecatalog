@@ -14,19 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_coursecatalog\privacy;
+
+defined('MOODLE_INTERNAL') || die();
+
 /**
- * Version metadata for the local_coursecatalog plugin.
+ * Privacy provider implementation for local_coursecatalog.
  *
  * @package   local_coursecatalog
  * @copyright 2025, Matej <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component = 'local_coursecatalog';
-$plugin->release = '1.1.0';
-$plugin->version = 2026030900;
-$plugin->requires = 2024100705;
-$plugin->maturity = MATURITY_STABLE;
-
+class provider implements \core_privacy\local\metadata\null_provider {
+    /**
+     * Returns the reason why this plugin stores no personal data.
+     *
+     * @return string
+     */
+    public static function get_reason(): string {
+        return 'privacy:metadata';
+    }
+}

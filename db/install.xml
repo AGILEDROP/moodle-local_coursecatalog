@@ -9,18 +9,21 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="slug" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="course_category" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="course_category" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="pagedescription" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Page description"/>
         <FIELD NAME="pagedescriptionformat" TYPE="int" LENGTH="1" NOTNULL="false" SEQUENCE="false" COMMENT="Page description format"/>
         <FIELD NAME="isenabled" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether the page is public or not"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="timeupdated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="showinprimarynavigation" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether to show the page in the navigation bar or not"/>
-        <FIELD NAME="usecleanurls" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether to use clean URLs or not"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="slug_uniq" TYPE="unique" FIELDS="slug"/>
       </KEYS>
+      <INDEXES>
+        <INDEX NAME="course_category_ix" UNIQUE="false" FIELDS="course_category"/>
+      </INDEXES>
     </TABLE>
   </TABLES>
 </XMLDB>
