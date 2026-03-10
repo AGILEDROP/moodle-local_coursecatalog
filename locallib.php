@@ -60,8 +60,14 @@ function local_coursecatalog_display_cards(stdClass $page): bool|string {
             'view' => $view,
             'isgrid' => ($view === 'grid'),
             'islist' => ($view === 'list'),
-            'gridurl' => (new moodle_url('/local/coursecatalog/view.php', ['slug' => $page->slug, 'sort' => $sort, 'view' => 'grid']))->out(false),
-            'listurl' => (new moodle_url('/local/coursecatalog/view.php', ['slug' => $page->slug, 'sort' => $sort, 'view' => 'list']))->out(false),
+            'gridurl' => (new moodle_url(
+                '/local/coursecatalog/view.php',
+                ['slug' => $page->slug, 'sort' => $sort, 'view' => 'grid']
+            ))->out(false),
+            'listurl' => (new moodle_url(
+                '/local/coursecatalog/view.php',
+                ['slug' => $page->slug, 'sort' => $sort, 'view' => 'list']
+            ))->out(false),
             'missingcategory' => true,
         ];
 
@@ -109,8 +115,14 @@ function local_coursecatalog_display_cards(stdClass $page): bool|string {
     $ctx->view = $view;
     $ctx->isgrid = ($view === 'grid');
     $ctx->islist = ($view === 'list');
-    $ctx->gridurl = (new moodle_url('/local/coursecatalog/view.php', ['slug' => $page->slug, 'sort' => $sort, 'view' => 'grid']))->out(false);
-    $ctx->listurl = (new moodle_url('/local/coursecatalog/view.php', ['slug' => $page->slug, 'sort' => $sort, 'view' => 'list']))->out(false);
+    $ctx->gridurl = (new moodle_url(
+        '/local/coursecatalog/view.php',
+        ['slug' => $page->slug, 'sort' => $sort, 'view' => 'grid']
+    ))->out(false);
+    $ctx->listurl = (new moodle_url(
+        '/local/coursecatalog/view.php',
+        ['slug' => $page->slug, 'sort' => $sort, 'view' => 'list']
+    ))->out(false);
 
     // 3) Render via Mustache.
     return $OUTPUT->render_from_template(

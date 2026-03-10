@@ -28,8 +28,7 @@ require_once(__DIR__ . '/../locallib.php');
  * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class hook_callbacks
-{
+class hook_callbacks {
     /**
      * Add enabled catalog pages to the site primary navigation.
      *
