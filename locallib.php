@@ -36,6 +36,10 @@ function local_coursecatalog_display_cards(stdClass $page): bool|string {
     global $OUTPUT;
 
     $sort = optional_param('sort', 'name_asc', PARAM_ALPHANUMEXT);
+    $view = optional_param('view', 'grid', PARAM_ALPHA);
+    if (!in_array($view, ['grid', 'list'], true)) {
+        $view = 'grid';
+    }
     $descriptioncontext = \context_coursecat::instance((int)$page->course_category, IGNORE_MISSING) ?: \context_system::instance();
     $formatteddescription = format_text(
         (string)($page->pagedescription ?? ''),
@@ -50,9 +54,14 @@ function local_coursecatalog_display_cards(stdClass $page): bool|string {
     if (!$category) {
         $ctx = (object)[
             'courses' => [],
-            'coursecount' => local_coursecatalog_get_course_count_string(0, $page->name),
+            'coursecount' => local_coursecatalog_get_course_count_string(0),
             'pagedescription' => $formatteddescription,
             'sort' => local_coursecatalog_build_sort_context($page->slug, $sort),
+            'view' => $view,
+            'isgrid' => ($view === 'grid'),
+            'islist' => ($view === 'list'),
+            'gridurl' => (new moodle_url('/local/coursecatalog/view.php', ['slug' => $page->slug, 'sort' => $sort, 'view' => 'grid']))->out(false),
+            'listurl' => (new moodle_url('/local/coursecatalog/view.php', ['slug' => $page->slug, 'sort' => $sort, 'view' => 'list']))->out(false),
             'missingcategory' => true,
         ];
 
@@ -77,7 +86,7 @@ function local_coursecatalog_display_cards(stdClass $page): bool|string {
         $ctx->courses[] = (object)[
                 'fullname' => format_string($c->fullname),
                 'courseimage' => $courseimageurl,
-                'summary' => format_text($c->summary, $c->summaryformat),
+                'summary' => shorten_text(strip_tags(format_text($c->summary, $c->summaryformat)), 500),
                 'buttontext' => $isenrolled
                         ? get_string('start', 'local_coursecatalog')
                         : get_string('enrolme', 'local_coursecatalog'),
@@ -94,10 +103,14 @@ function local_coursecatalog_display_cards(stdClass $page): bool|string {
 
     $ctx->courses = local_coursecatalog_sort_courses($ctx->courses, $sort);
 
-    $ctx->coursecount = local_coursecatalog_get_course_count_string(count($ctx->courses), $page->name);
+    $ctx->coursecount = local_coursecatalog_get_course_count_string(count($ctx->courses));
     $ctx->pagedescription = $formatteddescription;
-
     $ctx->sort = local_coursecatalog_build_sort_context($page->slug, $sort);
+    $ctx->view = $view;
+    $ctx->isgrid = ($view === 'grid');
+    $ctx->islist = ($view === 'list');
+    $ctx->gridurl = (new moodle_url('/local/coursecatalog/view.php', ['slug' => $page->slug, 'sort' => $sort, 'view' => 'grid']))->out(false);
+    $ctx->listurl = (new moodle_url('/local/coursecatalog/view.php', ['slug' => $page->slug, 'sort' => $sort, 'view' => 'list']))->out(false);
 
     // 3) Render via Mustache.
     return $OUTPUT->render_from_template(
@@ -213,27 +226,13 @@ function local_coursecatalog_count_modules(int $courseid): int {
 }
 
 /**
- * Build a human-readable count label for the page header, e.g. "1 learning path" or "3 learning paths".
+ * Build a human-readable course count label for the page header.
  *
- * If $pagenamesingular is not provided, a simple English heuristic is used:
- *  - words ending in "ies" → "y"
- *  - otherwise a trailing "s" is stripped
- *
- * @param int         $coursescount      Number of courses.
- * @param string      $pagename          Plural display name (e.g. "learning paths").
- * @param string|null $pagenamesingular  Optional singular form (e.g. "learning path").
- * @return string The label like "3 learning paths" or "1 learning path".
+ * @param int $coursescount Number of visible courses.
+ * @return string
  */
-function local_coursecatalog_get_course_count_string(int $coursescount, string $pagename, $pagenamesingular = null): string {
-    $plural = core_text::strtolower(trim($pagename)); // E.g. "learning paths".
-    // For the future:
-    // Prefer an explicit singular name if you have it on $page (recommended for i18n).
-    // Otherwise, do a simple English fallback: "ies"→"y", else drop trailing "s".
-    $singular = isset($pagenamesingular)
-            ? core_text::strtolower(trim($pagenamesingular))
-            : preg_replace(['/ies$/i', '/s$/i'], ['y', ''], $plural);
-
-    return $coursescount . ' ' . ($coursescount === 1 ? $singular : $plural);
+function local_coursecatalog_get_course_count_string(int $coursescount): string {
+    return get_string('coursescount', 'local_coursecatalog', $coursescount);
 }
 
 /**

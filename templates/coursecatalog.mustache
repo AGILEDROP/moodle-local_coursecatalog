@@ -1,69 +1,136 @@
-<div class="ecl-u-mb-2xl">
+{{#pagedescription}}
+<div class="mb-4">
     {{{pagedescription}}}
 </div>
+{{/pagedescription}}
 
-<div class="ecl-u-pb-s ecl-u-mb-xl ecl-u-border-bottom ecl-u-border-color-dark-80">
-    <div class="ecl-row ecl-u-align-items-center">
-        <div class="ecl-col-12 ecl-col-m-4 ecl-u-type-bold ecl-u-type-l">
-            {{coursecount}}
+<div class="d-flex flex-wrap justify-content-between align-items-center border-bottom py-3 mb-5 gap-4">
+    <span class="fw-semibold fs-5">{{coursecount}}</span>
+    <div class="d-flex align-items-center">
+        <div class="btn-group btn-group-sm px-3" role="group" aria-label="View mode">
+            <a href="{{gridurl}}"
+               class="btn {{#isgrid}}btn-secondary{{/isgrid}}{{^isgrid}}btn-outline-secondary{{/isgrid}}"
+               title="Grid view">
+                <i class="fa fa-th" aria-hidden="true"></i>
+            </a>
+            <a href="{{listurl}}"
+               class="btn {{#islist}}btn-secondary{{/islist}}{{^islist}}btn-outline-secondary{{/islist}}"
+               title="List view">
+                <i class="fa fa-list" aria-hidden="true"></i>
+            </a>
         </div>
-        <div class="ecl-col-12 ecl-col-m-8 ecl-u-d-flex ecl-u-justify-content-end">
-            <form method="get" action="{{sort.action}}">
-                <input type="hidden" name="slug" value="{{sort.slug}}">
-                <div class="ecl-form-group ecl-u-d-flex ecl-u-align-items-center">
-                    <label for="select-sortby" id="select-sortby-label" class="ecl-form-label ecl-u-mr-l">{{#str}}sortby, local_coursecatalog{{/str}}</label>
-                    <div class="ecl-select__container ecl-select__container--m ecl-u-mt-none sortby-select">
-                        <select class="ecl-select" data-ecl-auto-init="Select" id="select-sortby" name="sort" onchange="this.form.submit()">
-                            {{#sort.options}}
-                                <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
-                            {{/sort.options}}
-                        </select>
-                        <div class="ecl-select__icon">
-                            <button class="ecl-button ecl-button--ghost ecl-button--icon-only" type="button" tabindex="-1">
-                                <span class="ecl-button__container">
-                                    <span class="ecl-button__label" data-ecl-label="true">{{#str}}toggledropdown, local_coursecatalog{{/str}}</span>
-                                    {{#ecl_icon}}corner-arrow, xs, ecl-icon--rotate-180 ecl-button__icon{{/ecl_icon}}
-                                </span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
+        <span class="vr mx-2"></span>
+        <form method="get" action="{{sort.action}}" class="d-flex align-items-center gap-2 px-3">
+            <input type="hidden" name="slug" value="{{sort.slug}}">
+            <input type="hidden" name="view" value="{{view}}">
+            <label for="sortby-select" class="form-label mb-0 small text-nowrap">
+                {{#str}}sortby, local_coursecatalog{{/str}}
+            </label>
+            <select id="sortby-select" name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
+                {{#sort.options}}
+                    <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                {{/sort.options}}
+            </select>
+        </form>
     </div>
 </div>
 
-<div class="course-list">
+{{! Grid view }}
+{{#isgrid}}
+<div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
     {{#courses}}
-        <article class="ecl-content-item ecl-u-pa-m ecl-u-bg-primary-5">
+    <div class="col">
+        <div class="card h-100 shadow-sm border-0 rounded-3">
             {{#courseimage}}
-                <picture class="ecl-picture ecl-content-item__picture ecl-content-item__picture--large ecl-content-item__picture--left" data-ecl-picture-link="">
-                    <source srcset="{{courseimage}}" media="(min-width: 480px)" type="image/jpg"><img class="ecl-content-item__image" src="{{courseimage}}" alt="{{fullname}}">
-                </picture>
+            <img src="{{courseimage}}"
+                 class="card-img-top rounded-top-3"
+                 alt="{{fullname}}"
+                 style="height: 180px; object-fit: cover;">
             {{/courseimage}}
-
-            <div class="ecl-content-block ecl-content-item__content-block" data-ecl-auto-init="ContentBlock" data-ecl-content-block="">
-                <div class="ecl-content-block__title" data-ecl-title-link="">
-                    <a href="{{buttonurl}}" class="ecl-link ecl-link--standalone">
+            {{^courseimage}}
+            <div class="bg-light rounded-top-3 d-flex align-items-center justify-content-center"
+                 style="height: 120px;">
+                <i class="fa fa-graduation-cap fa-3x text-muted" aria-hidden="true"></i>
+            </div>
+            {{/courseimage}}
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title h6 mb-2">
+                    <a href="{{buttonurl}}" class="text-decoration-none fw-semibold stretched-link">
                         {{fullname}}
                     </a>
+                </h5>
+                <div class="card-text small text-muted flex-grow-1 mb-3">
+                    {{summary}}
                 </div>
-
-                <div class="ecl-content-block__description">
-                    {{{summary}}}
-                </div>
-
-                <div class="ecl-content-block__list-container">
-                    <dl class="ecl-description-list ecl-description-list--horizontal ecl-content-block__list">
-                        <dt class="ecl-description-list__term ecl-u-mt-s">{{#str}}content, local_coursecatalog{{/str}}</dt>
-                        <dd class="ecl-description-list__definition ecl-u-mt-s">{{modulescount}}, {{activitycount}}</dd>
-                    </dl>
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-auto">
+                    <small class="text-muted">
+                        {{modulescount}} &bull; {{activitycount}}
+                    </small>
+                    <span class="badge text-bg-primary rounded-pill">{{buttontext}}</span>
                 </div>
             </div>
-        </article>
+        </div>
+    </div>
     {{/courses}}
 
     {{^courses}}
-        <div class="alert">{{#str}}nocoursesinthiscategory, local_coursecatalog{{/str}}</div>
+    <div class="col-12">
+        <div class="alert alert-info mb-0">
+            {{#str}}nocoursesinthiscategory, local_coursecatalog{{/str}}
+        </div>
+    </div>
     {{/courses}}
 </div>
+{{/isgrid}}
+
+{{! List view }}
+{{#islist}}
+<div class="d-flex flex-column gap-5 py-2">
+    {{#courses}}
+    <div class="card shadow-sm border-0 rounded-3 mb-2">
+        <div class="row g-0">
+            {{#courseimage}}
+            <div class="col-4 col-md-3 col-lg-2">
+                <img src="{{courseimage}}"
+                     class="img-fluid rounded-start-3 w-100 h-100"
+                     alt="{{fullname}}"
+                     style="object-fit: cover; min-height: 140px; max-height: 200px;">
+            </div>
+            {{/courseimage}}
+            {{^courseimage}}
+            <div class="col-auto">
+                <div class="bg-light rounded-start-3 d-flex align-items-center justify-content-center h-100"
+                     style="width: 80px;">
+                    <i class="fa fa-graduation-cap fa-2x text-muted" aria-hidden="true"></i>
+                </div>
+            </div>
+            {{/courseimage}}
+            <div class="col">
+                <div class="card-body d-flex flex-column h-100">
+                    <h5 class="card-title h6 mb-1">
+                        <a href="{{buttonurl}}" class="text-decoration-none fw-semibold stretched-link">
+                            {{fullname}}
+                        </a>
+                    </h5>
+                    <div class="card-text small text-muted flex-grow-1 mb-3">
+                        {{summary}}
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-auto">
+                        <small class="text-muted">
+                            {{modulescount}} &bull; {{activitycount}}
+                        </small>
+                        <span class="badge text-bg-primary rounded-pill">{{buttontext}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/courses}}
+
+    {{^courses}}
+    <div class="alert alert-info mb-0">
+        {{#str}}nocoursesinthiscategory, local_coursecatalog{{/str}}
+    </div>
+    {{/courses}}
+</div>
+{{/islist}}
