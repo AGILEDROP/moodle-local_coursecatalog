@@ -17,15 +17,15 @@
 /**
  * Page for managing custom pages
  *
- * @package local_coursecatalog
- * @copyright 2025, Matej <matej.pal@agiledrop.com>
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_coursecatalog
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-require_once(__DIR__.'/../../config.php');
-require_once($CFG->libdir.'/adminlib.php');
-require_once(__DIR__.'/classes/form/addpage_form.php');
-require_once(__DIR__.'/locallib.php');
+require_once(__DIR__ . '/../../config.php');
+require_once($CFG->libdir . '/adminlib.php');
+require_once(__DIR__ . '/classes/form/addpage_form.php');
+require_once(__DIR__ . '/locallib.php');
 
 require_login();
 $syscontext = context_system::instance();
@@ -77,16 +77,24 @@ foreach ($pages as $page) {
 
     // Title + created date.
     echo html_writer::tag('h3', format_string($page->name));
-    echo html_writer::tag('small',
-            get_string('createdon', 'local_coursecatalog',
-                    userdate($page->timecreated)),
-            ['class' => 'text-muted']
+    echo html_writer::tag(
+        'small',
+        get_string(
+            'createdon',
+            'local_coursecatalog',
+            userdate($page->timecreated)
+        ),
+        ['class' => 'text-muted']
     );
 
-    echo html_writer::tag('small',
-            get_string('lastupdated', 'local_coursecatalog',
-                    userdate($page->timeupdated)),
-            ['class' => 'text-muted']
+    echo html_writer::tag(
+        'small',
+        get_string(
+            'lastupdated',
+            'local_coursecatalog',
+            userdate($page->timeupdated)
+        ),
+        ['class' => 'text-muted']
     );
 
     $categoryid = (int)$page->course_category;
@@ -96,37 +104,40 @@ foreach ($pages as $page) {
             : get_string('deletedcategorylabel', 'local_coursecatalog', $categoryid);
 
     // Category & courses count.
-    echo html_writer::tag('p',
-            get_string('coursecategory', 'local_coursecatalog')
-            .': '.$categoryname
+    echo html_writer::tag(
+        'p',
+        get_string('coursecategory', 'local_coursecatalog')
+            . ': ' . $categoryname
     );
     // Count only visible courses.
     $count = $categoryexists ? $DB->count_records('course', [
             'category' => $categoryid,
             'visible' => 1,
     ]) : 0;
-    echo html_writer::tag('p',
-            get_string('coursescount', 'local_coursecatalog', $count)
+    echo html_writer::tag(
+        'p',
+        get_string('coursescount', 'local_coursecatalog', $count)
     );
 
     // Slug & status.
-    echo html_writer::tag('p',
-            get_string('urlslug', 'local_coursecatalog')
-            .': /'.$page->slug
+    echo html_writer::tag(
+        'p',
+        get_string('urlslug', 'local_coursecatalog')
+            . ': /' . $page->slug
     );
 
     // Status.
     $statusbadge = !empty($page->isenabled)
-            ? '<span class="badge badge-success">'.get_string('enablepage','local_coursecatalog').'</span>'
-            : '<span class="badge badge-secondary">'.get_string('disablepage','local_coursecatalog').'</span>';
+            ? '<span class="badge badge-success">' . get_string('enablepage', 'local_coursecatalog') . '</span>'
+            : '<span class="badge badge-secondary">' . get_string('disablepage', 'local_coursecatalog') . '</span>';
 
     $navbadge = !empty($page->showinprimarynavigation)
-            ? '<span class="badge badge-success">'.get_string('navenabled','local_coursecatalog').'</span>'
-            : '<span class="badge badge-secondary">'.get_string('navdisabled','local_coursecatalog').'</span>';
+            ? '<span class="badge badge-success">' . get_string('navenabled', 'local_coursecatalog') . '</span>'
+            : '<span class="badge badge-secondary">' . get_string('navdisabled', 'local_coursecatalog') . '</span>';
 
     echo html_writer::div(
-            get_string('status', 'local_coursecatalog') . ': ' . $statusbadge . ' ' . $navbadge,
-            'mb-2'
+        get_string('status', 'local_coursecatalog') . ': ' . $statusbadge . ' ' . $navbadge,
+        'mb-2'
     );
 
     // Action buttons container.
@@ -135,9 +146,10 @@ foreach ($pages as $page) {
     echo html_writer::start_div();
     // 1) View page.
     $viewurl = new moodle_url('/local/coursecatalog/view.php', ['slug' => $page->slug]);
-    echo html_writer::link($viewurl,
-            get_string('viewpage', 'local_coursecatalog'),
-            ['class' => 'btn btn-primary btn-sm mr-2']
+    echo html_writer::link(
+        $viewurl,
+        get_string('viewpage', 'local_coursecatalog'),
+        ['class' => 'btn btn-primary btn-sm mr-2']
     );
 
     // 4) Enable/Disable the page.
@@ -170,9 +182,9 @@ foreach ($pages as $page) {
 
     if (empty($page->isenabled) && !empty($page->showinprimarynavigation)) {
         echo html_writer::tag(
-                'small',
-                get_string('navnote_disabled', 'local_coursecatalog'),
-                ['class' => 'text-warning d-block mt-1']
+            'small',
+            get_string('navnote_disabled', 'local_coursecatalog'),
+            ['class' => 'text-warning d-block mt-1']
         );
     }
 
@@ -182,9 +194,9 @@ foreach ($pages as $page) {
     // 7) Edit button.
     $editurl = new moodle_url('/local/coursecatalog/edit.php', ['id' => $page->id]);
     echo html_writer::link(
-            $editurl,
-            get_string('editpage', 'local_coursecatalog'),
-            ['class' => 'btn btn-secondary btn-sm mr-2']
+        $editurl,
+        get_string('editpage', 'local_coursecatalog'),
+        ['class' => 'btn btn-secondary btn-sm mr-2']
     );
     // 8) Delete button.
     $deleteurl = new moodle_url('/local/coursecatalog/delete.php', [

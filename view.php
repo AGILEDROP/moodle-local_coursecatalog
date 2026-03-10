@@ -17,21 +17,25 @@
 /**
  * Front-end script to display a course catalog.
  *
- * @package local_coursecatalog
- * @copyright 2025, Matej <matej.pal@agiledrop.com>
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_coursecatalog
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-require_once(__DIR__.'/../../config.php');
-require_once($CFG->libdir.'/adminlib.php');
-require_once(__DIR__.'/locallib.php');
+require_once(__DIR__ . '/../../config.php');
+require_once($CFG->libdir . '/adminlib.php');
+require_once(__DIR__ . '/locallib.php');
 
 $slug = required_param('slug', PARAM_ALPHANUMEXT);
 global $DB, $OUTPUT;
 
 // 1) Load the record
-$page = $DB->get_record('local_coursecatalog',
-        ['slug' => $slug], '*', MUST_EXIST);
+$page = $DB->get_record(
+    'local_coursecatalog',
+    ['slug' => $slug],
+    '*',
+    MUST_EXIST
+);
 
 require_login();
 
@@ -56,8 +60,10 @@ if (empty($page->isenabled)) {
         $PAGE->set_heading(get_string('pluginname', 'local_coursecatalog'));
 
         echo $OUTPUT->header();
-        echo $OUTPUT->notification(get_string('pagenotenableduser', 'local_coursecatalog'),
-                \core\output\notification::NOTIFY_INFO);
+        echo $OUTPUT->notification(
+            get_string('pagenotenableduser', 'local_coursecatalog'),
+            \core\output\notification::NOTIFY_INFO
+        );
         echo $OUTPUT->footer();
         exit;
     }
@@ -75,9 +81,9 @@ $PAGE->set_context($catcontext);
 $PAGE->set_title(format_string($page->name));
 $PAGE->set_heading(format_string($page->name));
 $PAGE->navbar->add(
-        $page->name ?? $page->slug,
-        $url,
-        'TYPE_COURSE_CATEGORY_PAGE'
+    $page->name ?? $page->slug,
+    $url,
+    'TYPE_COURSE_CATEGORY_PAGE'
 );
 $PAGE->navbar->make_active();
 
@@ -85,8 +91,10 @@ echo $OUTPUT->header();
 
 // 5) If a preview banner is needed:
 if (!empty($showpreviewbanner)) {
-    echo $OUTPUT->notification(get_string('previewdisablednotice', 'local_coursecatalog'),
-            \core\output\notification::NOTIFY_WARNING);
+    echo $OUTPUT->notification(
+        get_string('previewdisablednotice', 'local_coursecatalog'),
+        \core\output\notification::NOTIFY_WARNING
+    );
 }
 
 // 6) Output the HTML

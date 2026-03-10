@@ -18,10 +18,10 @@
  * Delete a Course Category Page.
  *
  * @package   local_coursecatalog
- * @copyright  2025 Matej Pal <matej.pal@agiledrop.com>
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 require_once(__DIR__ . '/locallib.php');
@@ -38,8 +38,8 @@ local_coursecatalog_delete_page($id);
 
 // 2) Redirect back with a notice
 redirect(
-        new moodle_url('/local/coursecatalog/pages.php'),
-        get_string('deletedsuccess', 'local_coursecatalog'),
-        null,
-        \core\output\notification::NOTIFY_SUCCESS
+    new moodle_url('/local/coursecatalog/pages.php'),
+    get_string('deletedsuccess', 'local_coursecatalog'),
+    null,
+    \core\output\notification::NOTIFY_SUCCESS
 );

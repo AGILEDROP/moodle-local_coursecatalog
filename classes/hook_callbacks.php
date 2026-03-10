@@ -23,9 +23,10 @@ require_once(__DIR__ . '/../locallib.php');
 /**
  * Hook callbacks for local_coursecatalog.
  *
- * @package    local_coursecatalog
- * @copyright  2025, Matej <matej.pal@agiledrop.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_coursecatalog
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class hook_callbacks
 {

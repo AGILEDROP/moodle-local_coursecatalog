@@ -18,13 +18,15 @@
  * Language configuration for the local_coursecatalog plugin.
  *
  * @package   local_coursecatalog
- * @copyright 2025, Matej <matej.pal@agiledrop.com>
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['activitycount_plural'] = 'activities';
+$string['activitycount_singular'] = 'activity';
 $string['addnewpage'] = 'Add new page';
 $string['allowedroles'] = 'Allowed roles';
-$string['audience'] = 'Audience: ';
 $string['cannotenablenavwhendisabled'] = 'Enable the page before showing it in primary navigation.';
 $string['content'] = 'Content: ';
 $string['coursecatalog:manage'] = 'Manage Course catalog pages';
@@ -39,7 +41,6 @@ $string['deletedsuccess'] = 'Course page deleted successfully.';
 $string['deletepageconfirm'] = 'Are you sure you want to delete "{$a}"?';
 $string['disabledsuccess'] = 'Page disabled.';
 $string['disablepage'] = 'Page disabled';
-$string['duration'] = 'Duration';
 $string['editpage'] = 'Edit page';
 $string['enable'] = 'Enable plugin';
 $string['enable_desc'] = 'Turn the Course catalog plugin on or off';
@@ -49,14 +50,11 @@ $string['enablepage'] = 'Page enabled';
 $string['enrolme'] = 'Enroll';
 $string['error:sluginuse'] = 'This URL slug is already in use.';
 $string['lastupdated'] = 'Last updated on {$a}';
-$string['level'] = 'Level: ';
 $string['managecategories'] = 'Manage Course catalog pages';
 $string['managepages'] = 'Manage Course catalog pages';
-$string['activitycount_plural'] = 'activities';
-$string['activitycount_singular'] = 'activity';
+$string['missingcategorypage'] = 'This course catalog page is no longer available because its course category has been deleted.';
 $string['modulecount_plural'] = 'modules';
 $string['modulecount_singular'] = 'module';
-$string['missingcategorypage'] = 'This course catalog page is no longer available because its course category has been deleted.';
 $string['navdisabled'] = 'Navigation link disabled';
 $string['navdisabledsuccess'] = 'Navigation link disabled.';
 $string['navenabled'] = 'Navigation link enabled';
@@ -76,10 +74,6 @@ $string['previewdisablednotice']   = '*** Preview mode *** This page is currentl
 $string['privacy:metadata'] = 'The Course catalog plugin does not store any personal data.';
 $string['savechanges']      = 'Save changes';
 $string['settings']   = 'Course catalog settings';
-$string['sort_duration_asc'] = 'Duration (short→long)';
-$string['sort_duration_desc'] = 'Duration (long→short)';
-$string['sort_level_asc'] = 'Level (Beginner→Advanced)';
-$string['sort_level_desc'] = 'Level (Advanced→Beginner)';
 $string['sort_modules_asc'] = 'Content (few→many modules)';
 $string['sort_modules_desc'] = 'Content (many→few modules)';
 $string['sort_name_asc'] = 'Name (A–Z)';
@@ -87,7 +81,6 @@ $string['sort_name_desc'] = 'Name (Z–A)';
 $string['sortby'] = 'Sort by:';
 $string['start'] = 'Start';
 $string['status'] = 'Status';
-$string['theme'] = 'Theme: ';
 $string['tobesetup'] = '(to be set up)';
 $string['toggledisableinnavigation'] = 'Disable navigation';
 $string['toggledisablepage'] = 'Disable page';

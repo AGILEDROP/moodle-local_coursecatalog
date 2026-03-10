@@ -17,12 +17,11 @@
 /**
  * Local course catalog plugin - Core library functions
  *
- * @package local_coursecatalog
- * @copyright 2025, Matej <matej.pal@agiledrop.com>
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_coursecatalog
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-use core_course\customfield\course_handler;
 use core_course\external\course_summary_exporter;
 
 /**
@@ -36,12 +35,12 @@ use core_course\external\course_summary_exporter;
 function local_coursecatalog_display_cards(stdClass $page): bool|string {
     global $OUTPUT;
 
-    $sort = optional_param('sort', 'level_asc', PARAM_ALPHANUMEXT); // name_asc|name_desc|duration_asc|...
+    $sort = optional_param('sort', 'name_asc', PARAM_ALPHANUMEXT);
     $descriptioncontext = \context_coursecat::instance((int)$page->course_category, IGNORE_MISSING) ?: \context_system::instance();
     $formatteddescription = format_text(
-            (string)($page->pagedescription ?? ''),
-            (int)($page->pagedescriptionformat ?? FORMAT_HTML),
-            ['context' => $descriptioncontext]
+        (string)($page->pagedescription ?? ''),
+        (int)($page->pagedescriptionformat ?? FORMAT_HTML),
+        ['context' => $descriptioncontext]
     );
 
     // 1) Get the category object and its courses.
@@ -69,37 +68,13 @@ function local_coursecatalog_display_cards(stdClass $page): bool|string {
             continue;
         }
 
-        $coursecustomfields = local_coursecatalog_fetch_course_customfields($c->id);
-
-        $customfields = [];
-
-        foreach ($coursecustomfields as $key => $value) {
-            if (is_array($value)) {
-                foreach ($value as $item) {
-                    $row = [];
-                    if (!empty($item['class'])) {
-                        $row['class'] = $item['class'];
-                    }
-                    if (array_key_exists('value', $item)) {
-                        $row['value'] = $item['value'];
-                    }
-                    if ($row) {
-                        $customfields[$key][] = $row;
-                    }
-                }
-            } else {
-                $customfields[$key] = $value;
-            }
-        }
-
         $courseimageurl = course_summary_exporter::get_course_image($c);
         $coursectx  = context_course::instance($c->id, IGNORE_MISSING);
         $isenrolled = $coursectx ? is_enrolled($coursectx) : false;
         $modulescount = local_coursecatalog_count_modules($c->id);
         $activitycount = local_coursecatalog_count_main_activities($c->id);
-        $duration_minutes = local_coursecatalog_parse_duration_minutes($customfields['duration'] ?? '');
 
-        $base = [
+        $ctx->courses[] = (object)[
                 'fullname' => format_string($c->fullname),
                 'courseimage' => $courseimageurl,
                 'summary' => format_text($c->summary, $c->summaryformat),
@@ -112,16 +87,12 @@ function local_coursecatalog_display_cards(stdClass $page): bool|string {
                         : new moodle_url('/enrol/index.php', ['id' => $c->id])
                 )->out(false),
                 'modulescount' => local_coursecatalog_modules_label($modulescount),
-                'modulescount_int' => $modulescount, // for sorting
+                'modulescount_int' => $modulescount,
                 'activitycount' => local_coursecatalog_modules_label($activitycount, 'activity'),
-                'duration_minutes' => $duration_minutes, // for sorting
         ];
-
-        $ctx->courses[] = (object) ($customfields + $base);
     }
 
     $ctx->courses = local_coursecatalog_sort_courses($ctx->courses, $sort);
-
 
     $ctx->coursecount = local_coursecatalog_get_course_count_string(count($ctx->courses), $page->name);
     $ctx->pagedescription = $formatteddescription;
@@ -130,8 +101,8 @@ function local_coursecatalog_display_cards(stdClass $page): bool|string {
 
     // 3) Render via Mustache.
     return $OUTPUT->render_from_template(
-            'local_coursecatalog/coursecatalog',
-            $ctx
+        'local_coursecatalog/coursecatalog',
+        $ctx
     );
 }
 
@@ -170,84 +141,13 @@ function local_coursecatalog_delete_page(int $id) {
 
 
 /**
- * Load and normalize all custom fields for a course.
- *
- * Normalization behavior:
- * - Text/textarea fields: returned as their raw string value
- * - Dropdown fields: returned as string (unless field is in $normalizeToArray list)
- * - Multiselect fields: normalized to array format [['value' => ..., 'class' => ...], ...]
- * - Specific fields in $normalizeToArray: always normalized to array format, even for dropdown
- *
- * The $normalizeToArray list contains fields that are rendered as arrays in templates
- * (with value/class properties). For these fields, both dropdown and multiselect types
- * are normalized to the same array format, allowing flexible switching between field types.
- *
- * Other fields (like 'content', 'audience', 'duration') remain as strings when configured
- * as dropdowns, matching how they are rendered in templates.
- *
- * Example return:
- * [
- *   'duration' => '8h',
- *   'level' => [['value' => 'Advanced', 'class' => 'highlight']],
- *   'theme' => [
- *       ['value' => 'Policy', 'class' => 'policy'],
- *       ['value' => 'Quality', 'class' => 'quality'],
- *   ],
- * ]
- *
- * @param int $courseid Course ID.
- * @return array<string,mixed>
- */
-function local_coursecatalog_fetch_course_customfields(int $courseid): array {
-    // Fields that should always be normalized to array format (rendered as arrays in templates)
-    $normalizeToArray = ['level', 'theme', 'format'];
-    
-    $handler = course_handler::create($courseid);
-    $fields = $handler->export_instance_data($courseid);
-    $map = [];
-    
-    foreach ($fields as $field) {
-        $short = $field->get_shortname();
-        $value = $field->get_value();
-        $type = $field->get_type();
-
-        // Normalize multiselect OR dropdown fields that are in the $normalizeToArray list
-        if ($type === 'multiselect' || ($type === 'select' && in_array($short, $normalizeToArray, true))) {
-            // Multiselect can have multiple values, dropdown has one
-            $values = is_array($value)
-                    ? $value
-                    : array_filter(array_map('trim', explode(',', (string)$value)));
-
-            foreach ($values as $item) {
-                $parts = explode('|', $item, 2);
-                $val = trim($parts[0]);
-                $class = isset($parts[1]) ? trim($parts[1]) : '';
-                $map[$short][] = ['value' => $val, 'class' => $class];
-            }
-
-            // Sort theme field values alphabetically
-            if ($short === 'theme' && isset($map[$short])) {
-                usort($map[$short], function($a, $b) {
-                    return strcasecmp($a['value'], $b['value']);
-                });
-            }
-        } else {
-            // Text, textarea, and dropdown fields (not in $normalizeToArray) remain as strings
-            $map[$short] = $value;
-        }
-    }
-
-    return $map;
-}
-
-/**
  * Count the number of user-visible sections ("modules/sections") in a course.
  *
  * A section is counted if:
  *  - It is uservisible for the current user, and
  *  - It has at least one of: activities/resources, a non-empty name, or a non-empty summary.
  *
- * Note: By default, section 0 ("General") IS included; flip $includeGeneral inside
+ * Note: By default, section 0 ("General") IS included; flip $includegeneral inside
  * the function to exclude it.
  *
  * @param int $courseid Moodle course id.
@@ -257,20 +157,19 @@ function local_coursecatalog_count_modules(int $courseid): int {
     $modinfo = get_fast_modinfo($courseid);
     $sections = $modinfo->get_section_info_all();
 
-    $includeGeneral = true; // set false to exclude section 0 ("General")
+    $includegeneral = true; // Set to false to exclude section 0 ("General").
 
     $modulescount = 0;
     foreach ($sections as $secnum => $sec) {
-
         if (!$sec->visible) {
-            continue; // hidden or not available to the current user
+            continue; // Hidden or not available to the current user.
         }
 
-        if (!$includeGeneral && $secnum === 0) {
+        if (!$includegeneral && $secnum === 0) {
             continue;
         }
 
-        // Skip subsections (delegated sections with a component)
+        // Skip subsections (delegated sections with a component).
         if (!empty($sec->component)) {
             continue;
         }
@@ -281,9 +180,9 @@ function local_coursecatalog_count_modules(int $courseid): int {
         $hassummary = trim(strip_tags((string)$sec->summary ?? '')) !== '';
 
         if ($hasmods || $hastitle || $hassummary) {
-            // Check if the section exclusively contains quiz, feedback, or customcert activities
+            // Check if the section exclusively contains quiz, feedback, or customcert activities.
             if ($hasmods) {
-                $hasOtherActivities = false;
+                $hasotheractivities = false;
                 $cmids = $modinfo->sections[$secnum];
 
                 foreach ($cmids as $cmid) {
@@ -293,15 +192,15 @@ function local_coursecatalog_count_modules(int $courseid): int {
                         continue;
                     }
 
-                    // Check if this is an activity other than quiz, feedback, or customcert
+                    // Check if this is an activity other than quiz, feedback, or customcert.
                     if (!in_array($cm->modname, ['quiz', 'feedback', 'customcert'])) {
-                        $hasOtherActivities = true;
+                        $hasotheractivities = true;
                         break;
                     }
                 }
 
-                // Skip this section if it only has quiz, feedback, or customcert activities
-                if (!$hasOtherActivities) {
+                // Skip this section if it only has quiz, feedback, or customcert activities.
+                if (!$hasotheractivities) {
                     continue;
                 }
             }
@@ -326,13 +225,13 @@ function local_coursecatalog_count_modules(int $courseid): int {
  * @return string The label like "3 learning paths" or "1 learning path".
  */
 function local_coursecatalog_get_course_count_string(int $coursescount, string $pagename, $pagenamesingular = null): string {
-    $plural = core_text::strtolower(trim($pagename)); // e.g. "learning paths"
+    $plural = core_text::strtolower(trim($pagename)); // E.g. "learning paths".
     // For the future:
     // Prefer an explicit singular name if you have it on $page (recommended for i18n).
     // Otherwise, do a simple English fallback: "ies"→"y", else drop trailing "s".
     $singular = isset($pagenamesingular)
             ? core_text::strtolower(trim($pagenamesingular))
-            : preg_replace(['/ies$/i','/s$/i'], ['y',''], $plural);
+            : preg_replace(['/ies$/i', '/s$/i'], ['y', ''], $plural);
 
     return $coursescount . ' ' . ($coursescount === 1 ? $singular : $plural);
 }
@@ -347,14 +246,10 @@ function local_coursecatalog_get_course_count_string(int $coursescount, string $
 function local_coursecatalog_build_sort_context(string $slug, string $current): array {
     $baseurl  = new moodle_url('/local/coursecatalog/view.php', ['slug' => $slug]);
     $options  = [
-            'name_asc' => get_string('sort_name_asc', 'local_coursecatalog'),   // e.g. "Name (A–Z)"
-            'name_desc' => get_string('sort_name_desc','local_coursecatalog'),
-            'duration_asc' => get_string('sort_duration_asc','local_coursecatalog'),
-            'duration_desc' => get_string('sort_duration_desc','local_coursecatalog'),
-            'modules_asc' => get_string('sort_modules_asc','local_coursecatalog'),
-            'modules_desc' => get_string('sort_modules_desc','local_coursecatalog'),
-            'level_asc' => get_string('sort_level_asc','local_coursecatalog'),   // Beginner→Advanced
-            'level_desc' => get_string('sort_level_desc','local_coursecatalog'),
+            'name_asc' => get_string('sort_name_asc', 'local_coursecatalog'),
+            'name_desc' => get_string('sort_name_desc', 'local_coursecatalog'),
+            'modules_asc' => get_string('sort_modules_asc', 'local_coursecatalog'),
+            'modules_desc' => get_string('sort_modules_desc', 'local_coursecatalog'),
     ];
 
     $ctx = [
@@ -379,53 +274,33 @@ function local_coursecatalog_build_sort_context(string $slug, string $current): 
  *
  * Expects each item to be an object with:
  *  - ->fullname (string) for name sorting and tie-break
- *  - ->duration_minutes (int) for duration sorting
- *  - ->modulescount_int (int) for modules' sorting
- *  - ->level (string) one of "beginner", "intermediate", "advanced" (case-insensitive)
+ *  - ->modulescount_int (int) for modules sorting
  *
  * @param array<int,stdClass> $items A list of course view-models to sort.
  * @param string $sort  Sort token.
  * @return array Sorted list.
  */
 function local_coursecatalog_sort_courses(array $items, string $sort): array {
-    $allowed = ['name_asc','name_desc','duration_asc','duration_desc','modules_asc','modules_desc','level_asc','level_desc'];
+    $allowed = ['name_asc', 'name_desc', 'modules_asc', 'modules_desc'];
     if (!in_array($sort, $allowed, true)) {
         $sort = 'name_asc';
     }
     [$field, $dir] = array_pad(explode('_', $sort, 2), 2, 'asc');
     $mult = ($dir === 'desc') ? -1 : 1;
 
-    $levelrank = function ($s): int {
-        $map = ['beginner' => 1, 'intermediate' => 2, 'advanced' => 3];
-        // Handle both string (legacy) and array (multiselect) values.
-        if (is_array($s)) {
-            // Extract first value from array format: [['value' => 'Beginner', 'class' => '...'], ...]
-            $s = !empty($s[0]['value']) ? $s[0]['value'] : '';
-        }
-        $k = core_text::strtolower(trim((string)$s));
-        return $map[$k] ?? 999;
-    };
-
-    usort($items, function($a, $b) use ($field, $mult, $levelrank) {
+    usort($items, function ($a, $b) use ($field, $mult) {
         switch ($field) {
             case 'name':
                 $va = core_text::strtolower($a->fullname ?? '');
                 $vb = core_text::strtolower($b->fullname ?? '');
                 break;
-            case 'duration':
-                $va = (int)($a->duration_minutes ?? 0);
-                $vb = (int)($b->duration_minutes ?? 0);
-                break;
             case 'modules':
                 $va = (int)($a->modulescount_int ?? 0);
                 $vb = (int)($b->modulescount_int ?? 0);
                 break;
-            case 'level':
-                $va = $levelrank($a->level ?? '');
-                $vb = $levelrank($b->level ?? '');
-                break;
             default:
-                $va = 0; $vb = 0;
+                $va = 0;
+                $vb = 0;
         }
 
         if ($va === $vb) {
@@ -437,54 +312,7 @@ function local_coursecatalog_sort_courses(array $items, string $sort): array {
         return ($va < $vb ? -1 : 1) * $mult;
     });
 
-
     return $items;
-}
-
-/**
- * Parse a human duration string to total minutes.
- *
- * Supported formats (case-insensitive, spaces optional):
- *  - "H:MM" e.g. "1:30"
- *  - "HhMM" / "Hh MM" e.g. "4h25", "4h 25"
- *  - "Hh [M[m|min|mins|minute|minutes]]" e.g. "7h 30m", "7h 30min", "7 hours 30 minutes", "8h"
- *  - "Mm" / "M minutes" e.g. "90m", "30min", "30 minutes"
- *  - plain integer e.g. "90" (interpreted as minutes)
- *
- * Returns 0 for unrecognised strings.
- *
- * @param mixed $s Input string (or scalar) to parse.
- * @return int Total minutes.
- */
-function local_coursecatalog_parse_duration_minutes($s): int {
-    $s = core_text::strtolower(trim((string)$s));
-    if ($s === '') { return 0; }
-
-    // 1) "H:MM" → e.g. "1:30"
-    if (preg_match('/^(\d+):(\d{1,2})$/', $s, $m)) {
-        return ((int)$m[1]) * 60 + (int)$m[2];
-    }
-
-    // 2) "4h25" (minutes without unit)
-    if (preg_match('/^(\d+)\s*h\s*(\d{1,2})$/i', $s, $m)) {
-        return ((int)$m[1]) * 60 + (int)$m[2];
-    }
-
-    // 3) "7h 30m", "7h 30min", "7h 30mins", "7 hours 30 minutes", "8h", "30min", "90m"...
-    if (preg_match('/^(?:(\d+)\s*h(?:ours?)?)?\s*(?:(\d+)\s*(?:m(?:in(?:ute)?s?)?)\.?)?$/i', $s, $m)) {
-        $h = isset($m[1]) && $m[1] !== '' ? (int)$m[1] : 0;
-        $min = isset($m[2]) && $m[2] !== '' ? (int)$m[2] : 0;
-        if ($h !== 0 || $min !== 0) {
-            return $h * 60 + $min;
-        }
-    }
-
-    // 4) Plain number → treat as minutes.
-    if (preg_match('/^\d+$/', $s)) {
-        return (int)$s;
-    }
-
-    return 0;
 }
 
 /**
@@ -505,7 +333,7 @@ function local_coursecatalog_parse_duration_minutes($s): int {
 function local_coursecatalog_modules_label(int $count, string $type = 'module'): string {
     $singular = $type === 'activity' ? 'activitycount_singular' : 'modulecount_singular';
     $plural = $type === 'activity' ? 'activitycount_plural' : 'modulecount_plural';
-    
+
     return $count . ' ' . ($count === 1 ?
                     get_string($singular, 'local_coursecatalog') :
                     get_string($plural, 'local_coursecatalog')
@@ -530,23 +358,23 @@ function local_coursecatalog_count_main_activities(int $courseid): int {
     $activitycount = 0;
 
     foreach ($sections as $secnum => $sec) {
-        // Skip subsections (delegated sections with a component)
+        // Skip subsections (delegated sections with a component).
         if ($sec->component === 'mod_subsection') {
             continue;
         }
 
-        // Check if section has modules
+        // Check if section has modules.
         if (!empty($modinfo->sections[$secnum])) {
             $cmids = $modinfo->sections[$secnum];
-            
+
             foreach ($cmids as $cmid) {
                 $cm = $modinfo->get_cm($cmid);
-                
+
                 if (!$cm->visible) {
                     continue;
                 }
-                
-                // Count only activities that are NOT in the excluded list
+
+                // Count only activities that are NOT in the excluded list.
                 if (!in_array($cm->modname, $excludedactivities)) {
                     $activitycount++;
                 }

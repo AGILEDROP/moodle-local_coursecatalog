@@ -17,15 +17,15 @@
 /**
  * Page for managing custom pages
  *
- * @package local_coursecatalog
- * @copyright 2025, Matej <matej.pal@agiledrop.com>
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_coursecatalog
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-require_once(__DIR__.'/../../config.php');
-require_once($CFG->libdir.'/adminlib.php');
-require_once(__DIR__.'/classes/form/addpage_form.php');
-require_once(__DIR__.'/locallib.php');
+require_once(__DIR__ . '/../../config.php');
+require_once($CFG->libdir . '/adminlib.php');
+require_once(__DIR__ . '/classes/form/addpage_form.php');
+require_once(__DIR__ . '/locallib.php');
 
 require_login();
 $syscontext = context_system::instance();
@@ -41,12 +41,12 @@ $PAGE->set_heading(get_string('editpage', 'local_coursecatalog'));
 global $DB;
 
 if (!$page = $DB->get_record('local_coursecatalog', ['id' => $id], '*', IGNORE_MISSING)) {
-    print_error('invalidrecord', 'error');
+    throw new \moodle_exception('invalidrecord', 'error');
 }
 
 $form = new \local_coursecatalog\form\addpage_form(
-        null,
-        ['isupdate' => true] // tells the form to change the submit label...
+    null,
+    ['isupdate' => true] // Tells the form to change the submit label.
 );
 
 if ($form->is_cancelled()) {
@@ -55,11 +55,13 @@ if ($form->is_cancelled()) {
     require_sesskey();
 
     // Ensure slug uniqueness excluding current record.
-    if ($exists = $DB->record_exists_select(
+    if (
+        $exists = $DB->record_exists_select(
             'local_coursecatalog',
             'slug = :slug AND id <> :id',
             ['slug' => $data->slug, 'id' => $id]
-    )) {
+        )
+    ) {
         \core\notification::error(get_string('error:sluginuse', 'local_coursecatalog'));
         // Re-display form with posted values.
         $form->set_data($data);

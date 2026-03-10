@@ -17,23 +17,23 @@
 /**
  * Plugin settings for the local_coursecatalog plugin.
  *
- * @package local_coursecatalog
- * @copyright 2025, Matej <matej.pal@agiledrop.com>
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_coursecatalog
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 defined('MOODLE_INTERNAL') || die;
 
 if ($hassiteconfig) {
     $ADMIN->add('localplugins', new admin_category(
-            'local_coursecatalog',
-            get_string('pluginname', 'local_coursecatalog')
+        'local_coursecatalog',
+        get_string('pluginname', 'local_coursecatalog')
     ));
 
     $ADMIN->add('local_coursecatalog', new admin_externalpage(
-            'local_coursecatalog_managepages',
-            get_string('managepages', 'local_coursecatalog'),
-            new moodle_url('/local/coursecatalog/pages.php'),
-            'local/coursecatalog:manage'
+        'local_coursecatalog_managepages',
+        get_string('managepages', 'local_coursecatalog'),
+        new moodle_url('/local/coursecatalog/pages.php'),
+        'local/coursecatalog:manage'
     ));
 }

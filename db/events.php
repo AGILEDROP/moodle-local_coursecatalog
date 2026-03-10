@@ -18,10 +18,10 @@
  * Event observers for local_coursecatalog.
  *
  * @package   local_coursecatalog
- * @copyright 2025, Matej <matej.pal@agiledrop.com>
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 defined('MOODLE_INTERNAL') || die();
 
 $observers = [

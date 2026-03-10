@@ -18,10 +18,10 @@
  * Form for adding Moodle pages.
  *
  * @package   local_coursecatalog
- * @copyright 2025, Matej <matej.pal@agiledrop.com>
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 namespace local_coursecatalog\form;
 
 use context_system;
@@ -35,11 +35,11 @@ require_once("$CFG->libdir/formslib.php");
  *
  * This class defines the form used for adding pages in the local_coursecatalog plugin.
  *
- * @copyright 2025, Matej <matej.pal@agiledrop.com>
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class addpage_form extends \moodleform {
-
     /**
      * Define the form elements and structure.
      */
@@ -71,16 +71,27 @@ class addpage_form extends \moodleform {
 
         // 4) Category dropdown
         $categories = \core_course_category::make_categories_list();
-        $mform->addElement('select', 'course_category',
-                get_string('coursecategory', 'local_coursecatalog'), $categories);
+        $mform->addElement(
+            'select',
+            'course_category',
+            get_string('coursecategory', 'local_coursecatalog'),
+            $categories
+        );
         $mform->addRule('course_category', null, 'required', null, 'client');
         $mform->addHelpButton('course_category', 'coursecategory', 'local_coursecatalog');
 
-        // Submit
+        // Submit button.
         $label = $isupdate ? get_string('savechanges') : get_string('addnewpage', 'local_coursecatalog');
         $this->add_action_buttons(true, $label);
     }
 
+    /**
+     * Validate the form data.
+     *
+     * @param array $data Form data.
+     * @param array $files Uploaded files.
+     * @return array Validation errors.
+     */
     public function validation($data, $files) {
         global $DB;
         $errors = parent::validation($data, $files);
@@ -90,16 +101,17 @@ class addpage_form extends \moodleform {
                 $errors['slug'] = get_string('error:sluginuse', 'local_coursecatalog');
             }
         } else {
-            if ($DB->record_exists_select(
+            if (
+                $DB->record_exists_select(
                     'local_coursecatalog',
                     'slug = :slug AND id <> :id',
                     ['slug' => $data['slug'], 'id' => $data['id']]
-            )) {
+                )
+            ) {
                 $errors['slug'] = get_string('error:sluginuse', 'local_coursecatalog');
             }
         }
 
         return $errors;
     }
-
 }

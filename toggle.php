@@ -20,11 +20,11 @@
  * Depending on which parameter is passed (isenabled or showinprimarynavigation),
  * this script will flip that flag in the DB and return the appropriate success message.
  *
- * @package    local_coursecatalog
- * @copyright  2025 Matej Pal <matej.pal@agiledrop.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   local_coursecatalog
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
@@ -79,6 +79,6 @@ $DB->update_record('local_coursecatalog', $record);
 
 // Redirect back with all messages joined.
 redirect(
-        new moodle_url('/local/coursecatalog/pages.php'),
-        implode(' ', $messages)
+    new moodle_url('/local/coursecatalog/pages.php'),
+    implode(' ', $messages)
 );

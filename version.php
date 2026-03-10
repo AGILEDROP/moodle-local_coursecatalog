@@ -18,10 +18,10 @@
  * Version metadata for the local_coursecatalog plugin.
  *
  * @package   local_coursecatalog
- * @copyright 2025, Matej <matej.pal@agiledrop.com>
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_coursecatalog';
@@ -29,4 +29,3 @@ $plugin->release = '1.1.0';
 $plugin->version = 2026030900;
 $plugin->requires = 2024100705;
 $plugin->maturity = MATURITY_STABLE;
-

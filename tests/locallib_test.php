@@ -25,7 +25,8 @@ require_once(__DIR__ . '/../locallib.php');
  *
  * @package   local_coursecatalog
  * @category  test
- * @copyright 2025, Matej <matej.pal@agiledrop.com>
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class locallib_test extends \advanced_testcase {

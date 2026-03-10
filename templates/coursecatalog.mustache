@@ -43,12 +43,6 @@
             {{/courseimage}}
 
             <div class="ecl-content-block ecl-content-item__content-block" data-ecl-auto-init="ContentBlock" data-ecl-content-block="">
-                {{#duration}}
-                    <ul class="ecl-content-block__primary-meta-container">
-                        <li class="ecl-content-block__primary-meta-item">{{#str}}duration, local_coursecatalog{{/str}}: <strong>{{duration}}</strong></li>
-                    </ul>
-                {{/duration}}
-
                 <div class="ecl-content-block__title" data-ecl-title-link="">
                     <a href="{{buttonurl}}" class="ecl-link ecl-link--standalone">
                         {{fullname}}
@@ -61,27 +55,8 @@
 
                 <div class="ecl-content-block__list-container">
                     <dl class="ecl-description-list ecl-description-list--horizontal ecl-content-block__list">
-                        <dt class="ecl-description-list__term ecl-u-mt-s">{{#str}}level, local_coursecatalog{{/str}}</dt>
-                        <dd class="ecl-description-list__definition ecl-u-mt-s ecl-description-list__definition--comma-separated">
-                            {{#level}}
-                                {{#.}}
-                                    <span>{{value}}</span>
-                                {{/.}}
-                            {{/level}}
-                        </dd>
-
                         <dt class="ecl-description-list__term ecl-u-mt-s">{{#str}}content, local_coursecatalog{{/str}}</dt>
                         <dd class="ecl-description-list__definition ecl-u-mt-s">{{modulescount}}, {{activitycount}}</dd>
-
-                        <dt class="ecl-description-list__term ecl-u-mt-s">{{#str}}theme, local_coursecatalog{{/str}}</dt>
-                        <dd class="ecl-description-list__definition ecl-u-mt-s">
-                            <ul class="ecl-content-block__label-container ecl-u-mb-none">
-                                {{#theme}}<li class="ecl-content-block__label-item"><span class="ecl-label ecl-label--{{class}}">{{value}}</span></li>{{/theme}}
-                            </ul>
-                        </dd>
-
-                        <dt class="ecl-description-list__term ecl-u-mt-s">{{#str}}audience, local_coursecatalog{{/str}}</dt>
-                        <dd class="ecl-description-list__definition ecl-u-mt-s">{{#audience}}{{audience}}{{/audience}}</dd>
                     </dl>
                 </div>
             </div>

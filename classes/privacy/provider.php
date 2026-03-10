@@ -16,13 +16,12 @@
 
 namespace local_coursecatalog\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy provider implementation for local_coursecatalog.
  *
  * @package   local_coursecatalog
- * @copyright 2025, Matej <matej.pal@agiledrop.com>
+ * @copyright Agiledrop, 2026 <developer@agiledrop.com>
+ * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements \core_privacy\local\metadata\null_provider {
