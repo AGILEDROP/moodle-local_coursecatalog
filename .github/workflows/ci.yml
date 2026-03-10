@@ -1,0 +1,159 @@
+name: Run all tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      MOODLE_DIR: ../moodle
+      MOODLEDATA_DIR: ../moodledata
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: 'postgres'
+          POSTGRES_HOST_AUTH_METHOD: 'trust'
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MYSQL_USER: 'root'
+          MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - moodle-branch: 'MOODLE_405_STABLE'
+            php: '8.1'
+            database: 'mariadb'
+          - moodle-branch: 'MOODLE_405_STABLE'
+            php: '8.1'
+            database: 'pgsql'
+          - moodle-branch: 'MOODLE_405_STABLE'
+            php: '8.2'
+            database: 'mariadb'
+          - moodle-branch: 'MOODLE_405_STABLE'
+            php: '8.2'
+            database: 'pgsql'
+          - moodle-branch: 'MOODLE_405_STABLE'
+            php: '8.3'
+            database: 'mariadb'
+          - moodle-branch: 'MOODLE_405_STABLE'
+            php: '8.3'
+            database: 'pgsql'
+          - moodle-branch: 'MOODLE_500_STABLE'
+            php: '8.2'
+            database: 'mariadb'
+          - moodle-branch: 'MOODLE_500_STABLE'
+            php: '8.2'
+            database: 'pgsql'
+          - moodle-branch: 'MOODLE_500_STABLE'
+            php: '8.3'
+            database: 'mariadb'
+          - moodle-branch: 'MOODLE_500_STABLE'
+            php: '8.3'
+            database: 'pgsql'
+          - moodle-branch: 'MOODLE_500_STABLE'
+            php: '8.4'
+            database: 'mariadb'
+          - moodle-branch: 'MOODLE_500_STABLE'
+            php: '8.4'
+            database: 'pgsql'
+          - moodle-branch: 'MOODLE_501_STABLE'
+            php: '8.2'
+            database: 'mariadb'
+          - moodle-branch: 'MOODLE_501_STABLE'
+            php: '8.2'
+            database: 'pgsql'
+          - moodle-branch: 'MOODLE_501_STABLE'
+            php: '8.3'
+            database: 'mariadb'
+          - moodle-branch: 'MOODLE_501_STABLE'
+            php: '8.3'
+            database: 'pgsql'
+          - moodle-branch: 'MOODLE_501_STABLE'
+            php: '8.4'
+            database: 'mariadb'
+          - moodle-branch: 'MOODLE_501_STABLE'
+            php: '8.4'
+            database: 'pgsql'
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Install node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup PHP environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, pgsql, mysqli
+          tools: phpunit
+          ini-values: max_input_vars=5000
+
+      - name: Deploy moodle-plugin-ci
+        run: |
+          composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
+          echo $(cd ci/bin; pwd) >> $GITHUB_PATH
+          echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
+          sudo locale-gen en_AU.UTF-8
+
+      - name: Install moodle-plugin-ci
+        run: |
+          set -x
+          moodle-plugin-ci install -vvv \
+            --plugin ./ \
+            --moodle "$MOODLE_DIR" \
+            --data "$MOODLEDATA_DIR" \
+            --not-paths moodle,ci,node_modules,vendor \
+            --db-host=127.0.0.1
+        env:
+          DB: ${{ matrix.database }}
+          MOODLE_BRANCH: ${{ matrix.moodle-branch }}
+
+      - name: Run phplint
+        if: ${{ always() }}
+        run: moodle-plugin-ci phplint
+
+      - name: Run phpcpd
+        if: ${{ always() }}
+        run: moodle-plugin-ci phpcpd || true
+
+      - name: Run phpmd
+        if: ${{ always() }}
+        run: moodle-plugin-ci phpmd
+
+      - name: Run codechecker
+        if: ${{ always() }}
+        run: moodle-plugin-ci codechecker
+
+      - name: Run validate
+        if: ${{ always() }}
+        run: moodle-plugin-ci validate
+
+      - name: Run savepoints
+        if: ${{ always() }}
+        run: moodle-plugin-ci savepoints
+
+      - name: Run phpdoc
+        if: ${{ always() }}
+        run: moodle-plugin-ci phpdoc
+
+      - name: Run phpunit
+        if: ${{ always() }}
+        run: moodle-plugin-ci phpunit
+
+      - name: Run behat
+        if: ${{ always() }}
+        run: moodle-plugin-ci behat --profile chrome
