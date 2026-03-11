@@ -38,7 +38,10 @@ $page = $DB->get_record(
     MUST_EXIST
 );
 
-require_login();
+// Allow guests when the page is configured for guest access; otherwise force login.
+if (empty($page->guestaccessible)) {
+    require_login();
+}
 
 // 2) Context & base login/cap checks
 $categoryid = (int)$page->course_category;

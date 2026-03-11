@@ -355,7 +355,7 @@ function local_coursecatalog_modules_label(int $count, string $type = 'module'):
  * Count the number of main activities in a course.
  *
  * Counts all user-visible activities in main sections (excluding subsections),
- * excluding specific activity types defined in $excludedactivities.
+ * excluding non-activity placeholders/resources defined in $excludedactivities.
  *
  * @param int $courseid Moodle course id.
  * @return int Number of main activities.
@@ -364,13 +364,19 @@ function local_coursecatalog_count_main_activities(int $courseid): int {
     $modinfo = get_fast_modinfo($courseid);
     $sections = $modinfo->get_section_info_all();
 
-    $excludedactivities = ['label', 'page', 'quiz', 'feedback', 'customcert', 'subsection'];
+    // Keep real activities (including quiz/feedback/customcert), exclude only placeholders/resources.
+    $excludedactivities = ['label', 'page', 'subsection'];
 
     $activitycount = 0;
 
     foreach ($sections as $secnum => $sec) {
         // Skip subsections (delegated sections with a component).
         if ($sec->component === 'mod_subsection') {
+            continue;
+        }
+
+        // Skip hidden/unavailable sections for the current user.
+        if (empty($sec->uservisible) || empty($sec->visible)) {
             continue;
         }
 
@@ -381,7 +387,7 @@ function local_coursecatalog_count_main_activities(int $courseid): int {
             foreach ($cmids as $cmid) {
                 $cm = $modinfo->get_cm($cmid);
 
-                if (!$cm->visible) {
+                if (empty($cm->visible) || empty($cm->uservisible)) {
                     continue;
                 }
 

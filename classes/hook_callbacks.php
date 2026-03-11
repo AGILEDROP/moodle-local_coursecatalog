@@ -51,6 +51,11 @@ class hook_callbacks {
                 continue;
             }
 
+            // Skip pages that are not guest-accessible for unauthenticated or guest users.
+            if ((!isloggedin() || isguestuser()) && empty($page->guestaccessible)) {
+                continue;
+            }
+
             $url = new \moodle_url('/local/coursecatalog/view.php', [
                 'slug' => $page->slug,
             ]);

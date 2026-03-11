@@ -136,8 +136,12 @@ foreach ($pages as $page) {
             ? '<span class="badge badge-success">' . get_string('navenabled', 'local_coursecatalog') . '</span>'
             : '<span class="badge badge-secondary">' . get_string('navdisabled', 'local_coursecatalog') . '</span>';
 
+    $guestbadge = !empty($page->guestaccessible)
+            ? '<span class="badge badge-info">' . get_string('guestaccessenabled', 'local_coursecatalog') . '</span>'
+            : '<span class="badge badge-secondary">' . get_string('guestaccessdisabled', 'local_coursecatalog') . '</span>';
+
     echo html_writer::div(
-        get_string('status', 'local_coursecatalog') . ': ' . $statusbadge . ' ' . $navbadge,
+        get_string('status', 'local_coursecatalog') . ': ' . $statusbadge . ' ' . $navbadge . ' ' . $guestbadge,
         'mb-2'
     );
 
@@ -185,6 +189,29 @@ foreach ($pages as $page) {
         echo html_writer::tag(
             'small',
             get_string('navnote_disabled', 'local_coursecatalog'),
+            ['class' => 'text-warning d-block mt-1']
+        );
+    }
+
+    // 6) Enable/Disable guest access.
+    $toggleguestaccessurl = new moodle_url('/local/coursecatalog/toggle.php', [
+            'id' => $page->id,
+            'guestaccessible' => empty($page->guestaccessible) ? 1 : 0,
+            'sesskey' => $actionsesskey,
+    ]);
+    $toggleguestaccesstext = empty($page->guestaccessible)
+            ? get_string('toggleenableguestaccess', 'local_coursecatalog')
+            : get_string('toggledisableguestaccess', 'local_coursecatalog');
+    $toggleguestaccessclasses = ['class' => 'btn btn-outline-info btn-sm mr-2'];
+    if (empty($page->isenabled)) {
+        $toggleguestaccessclasses['class'] .= ' disabled';
+    }
+    echo html_writer::link($toggleguestaccessurl, $toggleguestaccesstext, $toggleguestaccessclasses);
+
+    if (empty($page->isenabled) && !empty($page->guestaccessible)) {
+        echo html_writer::tag(
+            'small',
+            get_string('guestnote_disabled', 'local_coursecatalog'),
             ['class' => 'text-warning d-block mt-1']
         );
     }

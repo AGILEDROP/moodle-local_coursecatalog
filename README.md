@@ -14,6 +14,7 @@ Ideal for site home pages, program hubs, and curated category pages, it helps pr
 - Sorting Controls: Sort listed courses by name (A-Z / Z-A) or content count (few to many / many to few).
 - Visibility Toggles: Enable or disable each catalog page without deleting configuration.
 - Primary Navigation Toggle: Show enabled pages directly in Moodle primary navigation.
+- Guest Access Toggle: Allow unauthenticated (guest) users to view specific pages without logging in.
 - Manager Preview Mode: Managers can preview disabled pages with a warning notice.
 - Orphan Cleanup: Automatically removes catalog-page rows when linked course categories are deleted.
 - Accessible, Moodle-Native Output: Uses Moodle rendering, templates, and capability checks.
@@ -60,6 +61,7 @@ php admin/cli/upgrade.php
    - View page
    - Enable/disable page
    - Show/hide in primary navigation
+   - Enable/disable guest access
    - Edit
    - Delete
 
@@ -77,7 +79,9 @@ Catalog pages are served at:
 - Navigation links are only shown when both:
   - Page is enabled
   - "Show in primary navigation" is enabled
-- Navigation cannot be enabled for disabled pages.
+- Navigation links are hidden from unauthenticated and guest users unless "Guest access" is also enabled for that page.
+- Navigation and guest access cannot be enabled for disabled pages.
+- When guest access is enabled, unauthenticated visitors can view the page without logging in.
 
 ## Notes
 

@@ -33,6 +33,7 @@ $id = required_param('id', PARAM_INT);
 // Use optional_param so that passing 0 is distinct from not passing at all.
 $isenabled = optional_param('isenabled', null, PARAM_INT);
 $showinnav = optional_param('showinprimarynavigation', null, PARAM_INT);
+$guestaccessible = optional_param('guestaccessible', null, PARAM_INT);
 
 require_login();
 $syscontext = context_system::instance();
@@ -68,6 +69,22 @@ if ($showinnav !== null) {
     $messages[] = $showinnav
         ? get_string('navenabledsuccess', 'local_coursecatalog')
         : get_string('navdisabledsuccess', 'local_coursecatalog');
+}
+if ($guestaccessible !== null) {
+    if (!in_array($guestaccessible, [0, 1], true)) {
+        throw new invalid_parameter_exception('Invalid value for guestaccessible');
+    }
+
+    $existing = $DB->get_record('local_coursecatalog', ['id' => $id], 'id, isenabled', MUST_EXIST);
+
+    if ((int)$guestaccessible === 1 && empty($existing->isenabled)) {
+        throw new moodle_exception('cannotenableguestwhendisabled', 'local_coursecatalog');
+    }
+
+    $record->guestaccessible = $guestaccessible;
+    $messages[] = $guestaccessible
+        ? get_string('guestaccessenabledsuccess', 'local_coursecatalog')
+        : get_string('guestaccessdisabledsuccess', 'local_coursecatalog');
 }
 
 
