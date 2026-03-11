@@ -43,30 +43,37 @@ class hook_callbacks {
         $pages = local_coursecatalog_get_primary_navigation_pages();
 
         foreach ($pages as $page) {
-            $categoryid = (int)$page->course_category;
-            $context = \context_coursecat::instance($categoryid, IGNORE_MISSING);
+            try {
+                $categoryid = (int)$page->course_category;
+                $context = \context_coursecat::instance($categoryid, IGNORE_MISSING);
 
-            // Skip orphaned rows or inaccessible pages.
-            if (!$context || !has_capability('local/coursecatalog:view', $context)) {
-                continue;
+                // Skip orphaned rows (category was deleted).
+                if (!$context) {
+                    continue;
+                }
+
+                // Skip pages that are not guest-accessible for unauthenticated or guest users.
+                if ((!isloggedin() || isguestuser()) && empty($page->guestaccessible)) {
+                    continue;
+                }
+
+                $url = new \moodle_url('/local/coursecatalog/view.php', [
+                    'slug' => $page->slug,
+                ]);
+
+                $primaryview->add(
+                    format_string($page->name, true, ['context' => $context]),
+                    $url,
+                    \navigation_node::TYPE_CUSTOM,
+                    null,
+                    'local_coursecatalog_' . $page->id
+                );
+            } catch (\Throwable $e) {
+                debugging(
+                    'local_coursecatalog: failed to add nav item for page id=' . $page->id . ': ' . $e->getMessage(),
+                    DEBUG_DEVELOPER
+                );
             }
-
-            // Skip pages that are not guest-accessible for unauthenticated or guest users.
-            if ((!isloggedin() || isguestuser()) && empty($page->guestaccessible)) {
-                continue;
-            }
-
-            $url = new \moodle_url('/local/coursecatalog/view.php', [
-                'slug' => $page->slug,
-            ]);
-
-            $primaryview->add(
-                format_string($page->name, true, ['context' => $context]),
-                $url,
-                \navigation_node::TYPE_CUSTOM,
-                null,
-                'local_coursecatalog_' . $page->id
-            );
         }
     }
 }

@@ -112,7 +112,12 @@ function xmldb_local_coursecatalog_upgrade(int $oldversion): bool {
         $table = new xmldb_table('local_coursecatalog');
         $field = new xmldb_field(
             'guestaccessible',
-            XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
             'showinprimarynavigation'
         );
         if (!$dbman->field_exists($table, $field)) {

@@ -179,7 +179,13 @@ function local_coursecatalog_delete_page(int $id) {
  * @return int Number of sections meeting the criteria.
  */
 function local_coursecatalog_count_modules(int $courseid): int {
-    $modinfo = get_fast_modinfo($courseid);
+    try {
+        $modinfo = get_fast_modinfo($courseid);
+    } catch (\Exception $e) {
+        $msg = 'local_coursecatalog: get_fast_modinfo failed for course ' . $courseid . ': ' . $e->getMessage();
+        debugging($msg, DEBUG_DEVELOPER);
+        return 0;
+    }
     $sections = $modinfo->get_section_info_all();
 
     $includegeneral = true; // Set to false to exclude section 0 ("General").
@@ -361,7 +367,13 @@ function local_coursecatalog_modules_label(int $count, string $type = 'module'):
  * @return int Number of main activities.
  */
 function local_coursecatalog_count_main_activities(int $courseid): int {
-    $modinfo = get_fast_modinfo($courseid);
+    try {
+        $modinfo = get_fast_modinfo($courseid);
+    } catch (\Exception $e) {
+        $msg = 'local_coursecatalog: get_fast_modinfo failed for course ' . $courseid . ': ' . $e->getMessage();
+        debugging($msg, DEBUG_DEVELOPER);
+        return 0;
+    }
     $sections = $modinfo->get_section_info_all();
 
     // Keep real activities (including quiz/feedback/customcert), exclude only placeholders/resources.

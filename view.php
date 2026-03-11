@@ -23,14 +23,14 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(__DIR__ . '/../../config.php');
+require_once(__DIR__ . '/../../config.php'); // phpcs:ignore moodle.Files.RequireLogin.Missing
 require_once($CFG->libdir . '/adminlib.php');
 require_once(__DIR__ . '/locallib.php');
 
 $slug = required_param('slug', PARAM_ALPHANUMEXT);
 global $DB, $OUTPUT;
 
-// 1) Load the record
+// 1) Load the record.
 $page = $DB->get_record(
     'local_coursecatalog',
     ['slug' => $slug],
@@ -38,20 +38,18 @@ $page = $DB->get_record(
     MUST_EXIST
 );
 
-// Allow guests when the page is configured for guest access; otherwise force login.
+// Login is conditional: pages with guest access enabled are open to unauthenticated users.
 if (empty($page->guestaccessible)) {
     require_login();
 }
 
-// 2) Context & base login/cap checks
+// 2) Resolve category context (throws if category was deleted).
 $categoryid = (int)$page->course_category;
 $catcontext = context_coursecat::instance($categoryid, IGNORE_MISSING);
 
 if (!$catcontext) {
     throw new moodle_exception('missingcategorypage', 'local_coursecatalog');
 }
-
-require_capability('local/coursecatalog:view', $catcontext);
 
 // 3) Handle the “disabled” flag
 if (empty($page->isenabled)) {
@@ -102,7 +100,15 @@ if (!empty($showpreviewbanner)) {
 }
 
 // 6) Output the HTML
-$html = local_coursecatalog_display_cards($page);
-echo $html;
+try {
+    $html = local_coursecatalog_display_cards($page);
+    echo $html;
+} catch (\Throwable $e) {
+    echo $OUTPUT->notification(
+        get_string('pagerenderfailed', 'local_coursecatalog'),
+        \core\output\notification::NOTIFY_ERROR
+    );
+    debugging('local_coursecatalog: failed to render page slug=' . $slug . ': ' . $e->getMessage(), DEBUG_DEVELOPER);
+}
 
 echo $OUTPUT->footer();

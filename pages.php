@@ -137,7 +137,7 @@ foreach ($pages as $page) {
             : '<span class="badge badge-secondary">' . get_string('navdisabled', 'local_coursecatalog') . '</span>';
 
     $guestbadge = !empty($page->guestaccessible)
-            ? '<span class="badge badge-info">' . get_string('guestaccessenabled', 'local_coursecatalog') . '</span>'
+            ? '<span class="badge badge-success">' . get_string('guestaccessenabled', 'local_coursecatalog') . '</span>'
             : '<span class="badge badge-secondary">' . get_string('guestaccessdisabled', 'local_coursecatalog') . '</span>';
 
     echo html_writer::div(
