@@ -13,7 +13,7 @@ Feature: Manage catalog page toggles
   Scenario: Enabled page can be shown in primary navigation
     Given I visit "/local/coursecatalog/pages.php"
     When I set the field "Page name" to "Behat Catalog Page"
-    And I set the field "URL slug" to "behat-catalog-page"
+    And I set the field "Slug" to "behat-catalog-page"
     And I set the field "course_category" to "Behat Catalog Category"
     And I press "Add new page"
     And I click on "Enable page" "link"
@@ -26,7 +26,7 @@ Feature: Manage catalog page toggles
   Scenario: Disabling an enabled page hides its primary navigation link
     Given I visit "/local/coursecatalog/pages.php"
     When I set the field "Page name" to "Behat Catalog Page 2"
-    And I set the field "URL slug" to "behat-catalog-page-2"
+    And I set the field "Slug" to "behat-catalog-page-2"
     And I set the field "course_category" to "Behat Catalog Category"
     And I press "Add new page"
     And I click on "Enable page" "link"
@@ -41,7 +41,7 @@ Feature: Manage catalog page toggles
   Scenario: Navigation cannot be enabled while page is disabled
     Given I visit "/local/coursecatalog/pages.php"
     When I set the field "Page name" to "Behat Disabled Page"
-    And I set the field "URL slug" to "behat-disabled-page"
+    And I set the field "Slug" to "behat-disabled-page"
     And I set the field "course_category" to "Behat Catalog Category"
     And I press "Add new page"
     Then the "class" attribute of "Show in primary navigation" "link" should contain "disabled"

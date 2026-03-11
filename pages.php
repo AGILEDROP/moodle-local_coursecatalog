@@ -124,7 +124,7 @@ foreach ($pages as $page) {
     echo html_writer::tag(
         'p',
         get_string('urlslug', 'local_coursecatalog')
-            . ': /' . $page->slug
+            . ': ' . $page->slug
     );
 
     // Status.
@@ -185,14 +185,6 @@ foreach ($pages as $page) {
     }
     echo html_writer::link($toggleenablenavigationurl, $toggleenablenavigationtext, $toggleenablenavigationclasses);
 
-    if (empty($page->isenabled) && !empty($page->showinprimarynavigation)) {
-        echo html_writer::tag(
-            'small',
-            get_string('navnote_disabled', 'local_coursecatalog'),
-            ['class' => 'text-warning d-block mt-1']
-        );
-    }
-
     // 6) Enable/Disable guest access.
     $toggleguestaccessurl = new moodle_url('/local/coursecatalog/toggle.php', [
             'id' => $page->id,
@@ -208,6 +200,13 @@ foreach ($pages as $page) {
     }
     echo html_writer::link($toggleguestaccessurl, $toggleguestaccesstext, $toggleguestaccessclasses);
 
+    if (empty($page->isenabled) && !empty($page->showinprimarynavigation)) {
+        echo html_writer::tag(
+            'small',
+            get_string('navnote_disabled', 'local_coursecatalog'),
+            ['class' => 'text-warning d-block mt-1']
+        );
+    }
     if (empty($page->isenabled) && !empty($page->guestaccessible)) {
         echo html_writer::tag(
             'small',

@@ -7,7 +7,7 @@ Ideal for site home pages, program hubs, and curated category pages, it helps pr
 ## Key Features
 
 - Category Catalog Pages: Create custom catalog pages mapped to a single Moodle course category.
-- Slug-Based URLs: Each page has a unique URL slug for direct access.
+- Slug-Based Lookup: Each page has a unique slug used as the `?slug=` query parameter for direct access.
 - Grid + List Views: Displays visible category courses in card-based grid or list layouts.
 - Page Description Support: Add rich text descriptions per catalog page.
 - Course Count Label: Header label is based on the number of visible courses only.
@@ -54,7 +54,7 @@ php admin/cli/upgrade.php
 2. Add a new catalog page.
 3. Configure:
    - Page name
-   - URL slug
+   - Slug
    - Page description
    - Course category
 4. Save the page and use action buttons to:
@@ -86,7 +86,7 @@ Catalog pages are served at:
 ## Notes
 
 - The plugin stores page configuration in `{local_coursecatalog}`.
-- `slug` is unique and used as page lookup key.
+- `slug` is unique and used as the `?slug=` query parameter to look up and serve the page.
 - `course_category` is indexed for efficient category-based filtering.
 - Linked rows are auto-removed when a course category is deleted.
 - If UI or navigation updates do not appear immediately, purge Moodle caches.

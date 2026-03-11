@@ -57,7 +57,7 @@ class addpage_form extends \moodleform {
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addHelpButton('name', 'pagename', 'local_coursecatalog');
 
-        // 2) URL slug
+        // 2) Slug
         $mform->addElement('text', 'slug', get_string('pageslug', 'local_coursecatalog'));
         $mform->setType('slug', PARAM_ALPHANUMEXT);
         $mform->addRule('slug', null, 'required', null, 'client');
