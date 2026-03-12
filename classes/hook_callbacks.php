@@ -36,44 +36,33 @@ class hook_callbacks {
      * @return void
      */
     public static function extend_primary_navigation(\core\hook\navigation\primary_extend $hook): void {
-        global $DB;
-
         $primaryview = $hook->get_primaryview();
-
         $pages = local_coursecatalog_get_primary_navigation_pages();
 
         foreach ($pages as $page) {
-            try {
-                $categoryid = (int)$page->course_category;
-                $context = \context_coursecat::instance($categoryid, IGNORE_MISSING);
-
-                // Skip orphaned rows (category was deleted).
-                if (!$context) {
-                    continue;
-                }
-
-                // Skip pages that are not guest-accessible for unauthenticated or guest users.
-                if ((!isloggedin() || isguestuser()) && empty($page->guestaccessible)) {
-                    continue;
-                }
-
-                $url = new \moodle_url('/local/coursecatalog/view.php', [
-                    'slug' => $page->slug,
-                ]);
-
-                $primaryview->add(
-                    format_string($page->name, true, ['context' => $context]),
-                    $url,
-                    \navigation_node::TYPE_CUSTOM,
-                    null,
-                    'local_coursecatalog_' . $page->id
-                );
-            } catch (\Throwable $e) {
-                debugging(
-                    'local_coursecatalog: failed to add nav item for page id=' . $page->id . ': ' . $e->getMessage(),
-                    DEBUG_DEVELOPER
-                );
+            if (empty($page->id) || empty($page->slug) || trim((string)$page->name) === '') {
+                continue;
             }
+
+            $categoryid = (int)$page->course_category;
+            $context = \context_coursecat::instance($categoryid, IGNORE_MISSING);
+            if (!$context) {
+                continue;
+            }
+
+            if ((!isloggedin() || isguestuser()) && empty($page->guestaccessible)) {
+                continue;
+            }
+
+            $url = new \moodle_url('/local/coursecatalog/view.php', ['slug' => $page->slug]);
+
+            $primaryview->add(
+                format_string($page->name, true, ['context' => $context]),
+                $url,
+                \navigation_node::TYPE_CUSTOM,
+                null,
+                'local_coursecatalog_' . (int)$page->id
+            );
         }
     }
 }
