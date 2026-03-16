@@ -293,9 +293,9 @@ function local_coursecatalog_build_sort_context(string $slug, string $current): 
  *  - ->fullname (string) for name sorting and tie-break
  *  - ->modulescount_int (int) for modules sorting
  *
- * @param array<int,stdClass> $items A list of course view-models to sort.
- * @param string $sort  Sort token.
- * @return array Sorted list.
+ * @param stdClass[] $items A list of course view-models to sort.
+ * @param string $sort Sort token.
+ * @return stdClass[] Sorted list.
  */
 function local_coursecatalog_sort_courses(array $items, string $sort): array {
     $allowed = ['name_asc', 'name_desc', 'modules_asc', 'modules_desc'];

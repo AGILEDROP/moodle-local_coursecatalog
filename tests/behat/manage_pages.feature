@@ -1,3 +1,4 @@
+@local
 @local_coursecatalog
 Feature: Manage catalog page toggles
   In order to control catalog visibility safely
