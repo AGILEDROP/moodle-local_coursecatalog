@@ -15,17 +15,33 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version metadata for the local_coursecatalog plugin.
+ * Move a course catalog page up or down in display order.
  *
  * @package   local_coursecatalog
  * @copyright Agiledrop, 2026 <developer@agiledrop.com>
  * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_coursecatalog';
-$plugin->release = '1.1.0';
-$plugin->version = 2026031600;
-$plugin->requires = 2024100705;
-$plugin->maturity = MATURITY_STABLE;
+require_once(__DIR__ . '/../../config.php');
+require_once($CFG->libdir . '/adminlib.php');
+require_once(__DIR__ . '/locallib.php');
+
+$id = required_param('id', PARAM_INT);
+$direction = required_param('direction', PARAM_ALPHA);
+
+require_login();
+$syscontext = context_system::instance();
+require_capability('local/coursecatalog:manage', $syscontext);
+require_sesskey();
+
+if (!in_array($direction, ['up', 'down'], true)) {
+    throw new invalid_parameter_exception('Invalid move direction');
+}
+
+$message = '';
+if (local_coursecatalog_move_page($id, $direction)) {
+    $message = get_string('movesuccess', 'local_coursecatalog');
+}
+
+redirect(new moodle_url('/local/coursecatalog/pages.php'), $message);

@@ -38,6 +38,8 @@ final class locallib_test extends \advanced_testcase {
      * @param string $slug
      * @param int $isenabled
      * @param int $showinnav
+     * @param int $sortorder
+     * @param int $guestaccessible
      * @return \stdClass
      */
     private function build_catalog_page_record(
@@ -45,7 +47,9 @@ final class locallib_test extends \advanced_testcase {
         string $name,
         string $slug,
         int $isenabled = 1,
-        int $showinnav = 0
+        int $showinnav = 0,
+        int $sortorder = 0,
+        int $guestaccessible = 0
     ): \stdClass {
         $now = time();
         return (object)[
@@ -57,7 +61,9 @@ final class locallib_test extends \advanced_testcase {
             'isenabled' => $isenabled,
             'timecreated' => $now,
             'timeupdated' => $now,
+            'sortorder' => $sortorder,
             'showinprimarynavigation' => $showinnav,
+            'guestaccessible' => $guestaccessible,
         ];
     }
 
@@ -89,6 +95,95 @@ final class locallib_test extends \advanced_testcase {
 
         $this->assertFalse($DB->record_exists('local_coursecatalog', ['id' => $id1]));
         $this->assertTrue($DB->record_exists('local_coursecatalog', ['id' => $id2]));
+    }
+
+    /**
+     * Verify pages are returned in explicit sort order.
+     *
+     * @covers ::local_coursecatalog_get_all_pages
+     */
+    public function test_local_coursecatalog_get_all_pages_orders_by_sortorder(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $category = \core_course_category::create(['name' => 'Ordered category']);
+
+        $thirdid = $DB->insert_record('local_coursecatalog', $this->build_catalog_page_record(
+            $category->id,
+            'Third page',
+            'third-page',
+            1,
+            0,
+            30
+        ));
+        $firstid = $DB->insert_record('local_coursecatalog', $this->build_catalog_page_record(
+            $category->id,
+            'First page',
+            'first-page',
+            1,
+            0,
+            10
+        ));
+        $secondid = $DB->insert_record('local_coursecatalog', $this->build_catalog_page_record(
+            $category->id,
+            'Second page',
+            'second-page',
+            1,
+            0,
+            20
+        ));
+
+        $pages = array_values(\local_coursecatalog_get_all_pages());
+        $ids = array_map(static fn($page) => (int)$page->id, $pages);
+
+        $this->assertSame([$firstid, $secondid, $thirdid], $ids);
+    }
+
+    /**
+     * Verify move helper swaps a page with its adjacent neighbour.
+     *
+     * @covers ::local_coursecatalog_move_page
+     * @covers ::local_coursecatalog_normalise_sortorder
+     */
+    public function test_local_coursecatalog_move_page_swaps_adjacent_sortorder(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $category = \core_course_category::create(['name' => 'Move category']);
+
+        $firstid = $DB->insert_record('local_coursecatalog', $this->build_catalog_page_record(
+            $category->id,
+            'Move first',
+            'move-first',
+            1,
+            0,
+            1
+        ));
+        $secondid = $DB->insert_record('local_coursecatalog', $this->build_catalog_page_record(
+            $category->id,
+            'Move second',
+            'move-second',
+            1,
+            0,
+            2
+        ));
+        $thirdid = $DB->insert_record('local_coursecatalog', $this->build_catalog_page_record(
+            $category->id,
+            'Move third',
+            'move-third',
+            1,
+            0,
+            3
+        ));
+
+        $this->assertTrue(\local_coursecatalog_move_page((int)$secondid, 'up'));
+        $pages = array_values(\local_coursecatalog_get_all_pages());
+        $ids = array_map(static fn($page) => (int)$page->id, $pages);
+        $this->assertSame([$secondid, $firstid, $thirdid], $ids);
+
+        $this->assertFalse(\local_coursecatalog_move_page((int)$secondid, 'up'));
     }
 
     /**
@@ -186,28 +281,40 @@ final class locallib_test extends \advanced_testcase {
             'Nav eligible',
             'nav-eligible',
             1,
-            1
+            1,
+            20
+        ));
+        $firsteligibleid = $DB->insert_record('local_coursecatalog', $this->build_catalog_page_record(
+            $category->id,
+            'Nav eligible first',
+            'nav-eligible-first',
+            1,
+            1,
+            10
         ));
         $disabledid = $DB->insert_record('local_coursecatalog', $this->build_catalog_page_record(
             $category->id,
             'Nav disabled',
             'nav-disabled',
             0,
-            1
+            1,
+            30
         ));
         $hiddenid = $DB->insert_record('local_coursecatalog', $this->build_catalog_page_record(
             $category->id,
             'Nav hidden',
             'nav-hidden',
             1,
-            0
+            0,
+            40
         ));
         $orphanid = $DB->insert_record('local_coursecatalog', $this->build_catalog_page_record(
             99999999,
             'Nav orphan',
             'nav-orphan',
             1,
-            1
+            1,
+            50
         ));
 
         $moodlepage = new \moodle_page();
@@ -218,7 +325,12 @@ final class locallib_test extends \advanced_testcase {
         \local_coursecatalog\hook_callbacks::extend_primary_navigation($hook);
         $keys = $primaryview->get_children_key_list();
 
+        $this->assertSame([
+            'local_coursecatalog_' . $firsteligibleid,
+            'local_coursecatalog_' . $eligibleid,
+        ], array_values($keys));
         $this->assertContains('local_coursecatalog_' . $eligibleid, $keys);
+        $this->assertContains('local_coursecatalog_' . $firsteligibleid, $keys);
         $this->assertNotContains('local_coursecatalog_' . $disabledid, $keys);
         $this->assertNotContains('local_coursecatalog_' . $hiddenid, $keys);
         $this->assertNotContains('local_coursecatalog_' . $orphanid, $keys);

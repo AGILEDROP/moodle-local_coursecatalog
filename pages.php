@@ -56,6 +56,7 @@ if ($form->is_cancelled()) {
         'isenabled' => 0,
         'timecreated' => time(),
         'timeupdated' => time(),
+        'sortorder' => local_coursecatalog_get_next_sortorder(),
         'showinprimarynavigation' => 0,
     ];
     $DB->insert_record('local_coursecatalog', $record);
@@ -68,11 +69,12 @@ echo $OUTPUT->header();
 $form->display();
 
 // 3) Fetch all pages.
-$pages  = local_coursecatalog_get_all_pages();
+$pages = array_values(local_coursecatalog_get_all_pages());
 $catlist = \core_course_category::make_categories_list();
+$pagecount = count($pages);
 
 echo html_writer::start_div('course-catalog-cards');
-foreach ($pages as $page) {
+foreach ($pages as $index => $page) {
     echo html_writer::start_div('card mb-2 p-3 border');
     $actionsesskey = sesskey();
 
@@ -218,6 +220,35 @@ foreach ($pages as $page) {
     echo html_writer::end_div();
 
     echo html_writer::start_div();
+    $canmoveup = $index > 0;
+    $canmovedown = $index < ($pagecount - 1);
+
+    if ($canmoveup) {
+        $moveupurl = new moodle_url('/local/coursecatalog/move.php', [
+            'id' => $page->id,
+            'direction' => 'up',
+            'sesskey' => $actionsesskey,
+        ]);
+        echo html_writer::link(
+            $moveupurl,
+            get_string('moveup', 'local_coursecatalog'),
+            ['class' => 'btn btn-light btn-sm mr-2']
+        );
+    }
+
+    if ($canmovedown) {
+        $movedownurl = new moodle_url('/local/coursecatalog/move.php', [
+            'id' => $page->id,
+            'direction' => 'down',
+            'sesskey' => $actionsesskey,
+        ]);
+        echo html_writer::link(
+            $movedownurl,
+            get_string('movedown', 'local_coursecatalog'),
+            ['class' => 'btn btn-light btn-sm mr-2']
+        );
+    }
+
     // 7) Edit button.
     $editurl = new moodle_url('/local/coursecatalog/edit.php', ['id' => $page->id]);
     echo html_writer::link(
