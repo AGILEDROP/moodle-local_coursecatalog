@@ -126,5 +126,37 @@ function xmldb_local_coursecatalog_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026031100, 'local', 'coursecatalog');
     }
 
+    if ($oldversion < 2026031600) {
+        $table = new xmldb_table('local_coursecatalog');
+
+        $field = new xmldb_field(
+            'sortorder',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'timeupdated'
+        );
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $pages = $DB->get_records('local_coursecatalog', null, 'timecreated ASC, id ASC', 'id');
+        $sortorder = 1;
+        foreach ($pages as $page) {
+            $DB->set_field('local_coursecatalog', 'sortorder', $sortorder, ['id' => $page->id]);
+            $sortorder++;
+        }
+
+        $index = new xmldb_index('sortorder_ix', XMLDB_INDEX_NOTUNIQUE, ['sortorder']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        upgrade_plugin_savepoint(true, 2026031600, 'local', 'coursecatalog');
+    }
+
     return true;
 }

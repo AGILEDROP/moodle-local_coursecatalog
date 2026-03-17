@@ -132,13 +132,100 @@ function local_coursecatalog_display_cards(stdClass $page): bool|string {
 }
 
 /**
- * Return all configured category‐pages, newest first.
+ * Return all configured category pages in display order.
  *
  * @return stdClass[] keyed by id
  */
 function local_coursecatalog_get_all_pages() {
     global $DB;
-    return $DB->get_records('local_coursecatalog', null, 'timecreated DESC');
+    return $DB->get_records('local_coursecatalog', null, 'sortorder ASC, id ASC');
+}
+
+/**
+ * Return the next available sort order value.
+ *
+ * @return int
+ */
+function local_coursecatalog_get_next_sortorder(): int {
+    global $DB;
+
+    $maxsortorder = $DB->get_field_sql('SELECT COALESCE(MAX(sortorder), 0) FROM {local_coursecatalog}');
+    return (int)$maxsortorder + 1;
+}
+
+/**
+ * Normalise sort order values into a contiguous sequence.
+ *
+ * @return void
+ */
+function local_coursecatalog_normalise_sortorder(): void {
+    global $DB;
+
+    $pages = $DB->get_records('local_coursecatalog', null, 'sortorder ASC, id ASC', 'id, sortorder');
+    $expected = 1;
+
+    foreach ($pages as $page) {
+        if ((int)$page->sortorder !== $expected) {
+            $DB->set_field('local_coursecatalog', 'sortorder', $expected, ['id' => $page->id]);
+        }
+        $expected++;
+    }
+}
+
+/**
+ * Move a catalog page one position up or down.
+ *
+ * @param int $pageid
+ * @param string $direction Either "up" or "down".
+ * @return bool True if the page was moved, false if no move was possible.
+ */
+function local_coursecatalog_move_page(int $pageid, string $direction): bool {
+    global $DB;
+
+    if (!in_array($direction, ['up', 'down'], true)) {
+        throw new invalid_parameter_exception('Invalid move direction');
+    }
+
+    if (!$DB->record_exists('local_coursecatalog', ['id' => $pageid])) {
+        return false;
+    }
+
+    $transaction = $DB->start_delegated_transaction();
+
+    local_coursecatalog_normalise_sortorder();
+
+    $pages = array_values($DB->get_records('local_coursecatalog', null, 'sortorder ASC, id ASC', 'id, sortorder'));
+    $currentindex = null;
+
+    foreach ($pages as $index => $page) {
+        if ((int)$page->id === $pageid) {
+            $currentindex = $index;
+            break;
+        }
+    }
+
+    if ($currentindex === null) {
+        $transaction->allow_commit();
+        return false;
+    }
+
+    $targetindex = $direction === 'up' ? $currentindex - 1 : $currentindex + 1;
+    if (!array_key_exists($targetindex, $pages)) {
+        $transaction->allow_commit();
+        return false;
+    }
+
+    $currentpage = $pages[$currentindex];
+    $targetpage = $pages[$targetindex];
+    $now = time();
+
+    $DB->set_field('local_coursecatalog', 'sortorder', (int)$targetpage->sortorder, ['id' => $currentpage->id]);
+    $DB->set_field('local_coursecatalog', 'sortorder', (int)$currentpage->sortorder, ['id' => $targetpage->id]);
+    $DB->set_field('local_coursecatalog', 'timeupdated', $now, ['id' => $currentpage->id]);
+    $DB->set_field('local_coursecatalog', 'timeupdated', $now, ['id' => $targetpage->id]);
+
+    $transaction->allow_commit();
+    return true;
 }
 
 /**
@@ -293,9 +380,9 @@ function local_coursecatalog_build_sort_context(string $slug, string $current): 
  *  - ->fullname (string) for name sorting and tie-break
  *  - ->modulescount_int (int) for modules sorting
  *
- * @param array<int,stdClass> $items A list of course view-models to sort.
- * @param string $sort  Sort token.
- * @return array Sorted list.
+ * @param stdClass[] $items A list of course view-models to sort.
+ * @param string $sort Sort token.
+ * @return stdClass[] Sorted list.
  */
 function local_coursecatalog_sort_courses(array $items, string $sort): array {
     $allowed = ['name_asc', 'name_desc', 'modules_asc', 'modules_desc'];
@@ -425,5 +512,5 @@ function local_coursecatalog_get_primary_navigation_pages(): array {
     return $DB->get_records('local_coursecatalog', [
         'isenabled' => 1,
         'showinprimarynavigation' => 1,
-    ], 'name ASC');
+    ], 'sortorder ASC, id ASC');
 }

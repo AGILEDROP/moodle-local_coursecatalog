@@ -12,6 +12,7 @@ Ideal for site home pages, program hubs, and curated category pages, it helps pr
 - Page Description Support: Add rich text descriptions per catalog page.
 - Course Count Label: Header label is based on the number of visible courses only.
 - Sorting Controls: Sort listed courses by name (A-Z / Z-A) or content count (few to many / many to few).
+- Explicit Page Ordering: Move pages up/down in admin to control catalog-page display order.
 - Visibility Toggles: Enable or disable each catalog page without deleting configuration.
 - Primary Navigation Toggle: Show enabled pages directly in Moodle primary navigation.
 - Guest Access Toggle: Allow unauthenticated (guest) users to view specific pages without logging in.
@@ -59,6 +60,7 @@ php admin/cli/upgrade.php
    - Course category
 4. Save the page and use action buttons to:
    - View page
+   - Move up/down
    - Enable/disable page
    - Show/hide in primary navigation
    - Enable/disable guest access
@@ -79,6 +81,7 @@ Catalog pages are served at:
 - Navigation links are only shown when both:
   - Page is enabled
   - "Show in primary navigation" is enabled
+- Primary navigation item order follows the page order configured on the Manage pages screen.
 - Navigation links are hidden from unauthenticated and guest users unless "Guest access" is also enabled for that page.
 - Navigation and guest access cannot be enabled for disabled pages.
 - When guest access is enabled, unauthenticated visitors can view the page without logging in.
@@ -87,6 +90,7 @@ Catalog pages are served at:
 
 - The plugin stores page configuration in `{local_coursecatalog}`.
 - `slug` is unique and used as the `?slug=` query parameter to look up and serve the page.
+- `sortorder` controls admin listing order and primary navigation order for enabled pages.
 - `course_category` is indexed for efficient category-based filtering.
 - Linked rows are auto-removed when a course category is deleted.
 - If UI or navigation updates do not appear immediately, purge Moodle caches.

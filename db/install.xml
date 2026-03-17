@@ -15,6 +15,7 @@
         <FIELD NAME="isenabled" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether the page is public or not"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="timeupdated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Explicit display order for catalog pages"/>
         <FIELD NAME="showinprimarynavigation" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether to show the page in the navigation bar or not"/>
         <FIELD NAME="guestaccessible" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether the page is accessible to guests (not logged in users)"/>
       </FIELDS>
@@ -24,6 +25,7 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="course_category_ix" UNIQUE="false" FIELDS="course_category"/>
+        <INDEX NAME="sortorder_ix" UNIQUE="false" FIELDS="sortorder"/>
       </INDEXES>
     </TABLE>
   </TABLES>
