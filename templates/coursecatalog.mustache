@@ -7,15 +7,15 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center border-bottom py-3 mb-5 gap-4">
     <span class="fw-semibold fs-5">{{coursecount}}</span>
     <div class="d-flex align-items-center">
-        <div class="btn-group btn-group-sm px-3" role="group" aria-label="View mode">
+        <div class="btn-group btn-group-sm px-3" role="group" aria-label="{{#str}}viewmode, local_coursecatalog{{/str}}">
             <a href="{{gridurl}}"
                class="btn {{#isgrid}}btn-secondary{{/isgrid}}{{^isgrid}}btn-outline-secondary{{/isgrid}}"
-               title="Grid view">
+               title="{{#str}}viewgrid, local_coursecatalog{{/str}}">
                 <i class="fa fa-th" aria-hidden="true"></i>
             </a>
             <a href="{{listurl}}"
                class="btn {{#islist}}btn-secondary{{/islist}}{{^islist}}btn-outline-secondary{{/islist}}"
-               title="List view">
+               title="{{#str}}viewlist, local_coursecatalog{{/str}}">
                 <i class="fa fa-list" aria-hidden="true"></i>
             </a>
         </div>
