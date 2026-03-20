@@ -42,6 +42,16 @@ $form = new \local_coursecatalog\form\addpage_form();
 if ($form->is_cancelled()) {
     redirect($PAGE->url);
 } else if ($data = $form->get_data()) {
+    $editoroptions = ['maxfiles' => 0, 'maxbytes' => 0, 'context' => $syscontext];
+    $data = file_postupdate_standard_editor(
+        $data,
+        'pagedescription',
+        $editoroptions,
+        $syscontext,
+        'local_coursecatalog',
+        'pagedescription',
+        0
+    );
     \local_coursecatalog\manager::create_page($data);
     redirect($PAGE->url);
 }

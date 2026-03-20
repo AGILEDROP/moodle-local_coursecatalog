@@ -104,16 +104,12 @@ class manager {
     public static function create_page(\stdClass $data): int {
         global $DB;
 
-        $desc = $data->description ?? ['text' => '', 'format' => FORMAT_HTML];
-        $descriptiontext = is_array($desc) && array_key_exists('text', $desc) ? $desc['text'] : '';
-        $descriptionformat = is_array($desc) && array_key_exists('format', $desc) ? (int)$desc['format'] : FORMAT_HTML;
-
         $record = (object)[
             'name' => $data->name,
             'slug' => $data->slug,
             'course_category' => $data->course_category,
-            'pagedescription' => $descriptiontext,
-            'pagedescriptionformat' => $descriptionformat,
+            'pagedescription' => $data->pagedescription ?? '',
+            'pagedescriptionformat' => $data->pagedescriptionformat ?? FORMAT_HTML,
             'isenabled' => 0,
             'timecreated' => time(),
             'timeupdated' => time(),
@@ -142,17 +138,13 @@ class manager {
             return false;
         }
 
-        $desc = $data->description ?? ['text' => '', 'format' => FORMAT_HTML];
-        $descriptiontext = is_array($desc) && array_key_exists('text', $desc) ? $desc['text'] : '';
-        $descriptionformat = is_array($desc) && array_key_exists('format', $desc) ? (int)$desc['format'] : FORMAT_HTML;
-
         $update = (object)[
             'id' => $id,
             'name' => $data->name,
             'slug' => $data->slug,
             'course_category' => $data->course_category,
-            'pagedescription' => $descriptiontext,
-            'pagedescriptionformat' => $descriptionformat,
+            'pagedescription' => $data->pagedescription ?? '',
+            'pagedescriptionformat' => $data->pagedescriptionformat ?? FORMAT_HTML,
             'timeupdated' => time(),
         ];
 

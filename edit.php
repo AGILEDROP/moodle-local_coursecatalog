@@ -55,6 +55,17 @@ if ($form->is_cancelled()) {
 } else if ($data = $form->get_data()) {
     require_sesskey();
 
+    $editoroptions = ['maxfiles' => 0, 'maxbytes' => 0, 'context' => $syscontext];
+    $data = file_postupdate_standard_editor(
+        $data,
+        'pagedescription',
+        $editoroptions,
+        $syscontext,
+        'local_coursecatalog',
+        'pagedescription',
+        $id
+    );
+
     if (!\local_coursecatalog\manager::update_page($id, $data)) {
         \core\notification::error(get_string('error:sluginuse', 'local_coursecatalog'));
         $form->set_data($data);
@@ -65,15 +76,24 @@ if ($form->is_cancelled()) {
 }
 
 // Prefill form.
+$editoroptions = ['maxfiles' => 0, 'maxbytes' => 0, 'context' => $syscontext];
 $defaults = new stdClass();
 $defaults->id = $page->id;
 $defaults->name = $page->name;
 $defaults->slug = $page->slug;
-$defaults->description = [
-        'text'   => $page->pagedescription ?? '',
-        'format' => $page->pagedescriptionformat ?? FORMAT_HTML,
-];
+$defaults->pagedescription = $page->pagedescription ?? '';
+$defaults->pagedescriptionformat = $page->pagedescriptionformat ?? FORMAT_HTML;
 $defaults->course_category = $page->course_category;
+
+$defaults = file_prepare_standard_editor(
+    $defaults,
+    'pagedescription',
+    $editoroptions,
+    $syscontext,
+    'local_coursecatalog',
+    'pagedescription',
+    $defaults->id
+);
 
 echo $OUTPUT->header();
 $form->set_data($defaults);

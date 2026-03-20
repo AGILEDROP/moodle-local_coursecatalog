@@ -205,7 +205,8 @@ final class manager_test extends \advanced_testcase {
             'name' => 'New page',
             'slug' => 'new-page',
             'course_category' => $cat->id,
-            'description' => ['text' => '<p>Hello</p>', 'format' => FORMAT_HTML],
+            'pagedescription' => '<p>Hello</p>',
+            'pagedescriptionformat' => FORMAT_HTML,
         ];
         $id = manager::create_page($data);
 
@@ -281,7 +282,8 @@ final class manager_test extends \advanced_testcase {
             'name' => 'New name',
             'slug' => 'new-slug',
             'course_category' => $cat->id,
-            'description' => ['text' => '<p>Updated</p>', 'format' => FORMAT_HTML],
+            'pagedescription' => '<p>Updated</p>',
+            'pagedescriptionformat' => FORMAT_HTML,
         ]);
 
         $this->assertTrue($result);

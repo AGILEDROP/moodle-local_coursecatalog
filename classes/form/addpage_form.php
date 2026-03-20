@@ -65,9 +65,9 @@ class addpage_form extends \moodleform {
 
         // 3) Page description
         $editoroptions = ['maxfiles' => 0, 'maxbytes' => 0, 'context' => context_system::instance()];
-        $mform->addElement('editor', 'description', get_string('pagedescription', 'local_coursecatalog'), null, $editoroptions);
-        $mform->setType('description', PARAM_RAW);
-        $mform->addHelpButton('description', 'pagedescription', 'local_coursecatalog');
+        $mform->addElement('editor', 'pagedescription_editor', get_string('pagedescription', 'local_coursecatalog'), null, $editoroptions);
+        $mform->setType('pagedescription_editor', PARAM_RAW);
+        $mform->addHelpButton('pagedescription_editor', 'pagedescription', 'local_coursecatalog');
 
         // 4) Category dropdown
         $categories = \core_course_category::make_categories_list();
