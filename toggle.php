@@ -40,62 +40,8 @@ $syscontext = context_system::instance();
 require_capability('local/coursecatalog:manage', $syscontext);
 require_sesskey();
 
-global $DB;
+$messages = \local_coursecatalog\manager::toggle_page($id, $isenabled, $showinnav, $guestaccessible);
 
-// Build an object to update only the fields actually passed.
-$record = (object)['id' => $id];
-$messages = [];
-if ($isenabled !== null) {
-    if (!in_array($isenabled, [0, 1], true)) {
-        throw new invalid_parameter_exception('Invalid value for isenabled');
-    }
-    $record->isenabled = $isenabled;
-    $messages[] = $isenabled
-            ? get_string('enabledsuccess', 'local_coursecatalog')
-            : get_string('disabledsuccess', 'local_coursecatalog');
-}
-if ($showinnav !== null) {
-    if (!in_array($showinnav, [0, 1], true)) {
-        throw new invalid_parameter_exception('Invalid value for showinprimarynavigation');
-    }
-
-    $existing = $DB->get_record('local_coursecatalog', ['id' => $id], 'id, isenabled', MUST_EXIST);
-
-    if ((int)$showinnav === 1 && empty($existing->isenabled)) {
-        throw new moodle_exception('cannotenablenavwhendisabled', 'local_coursecatalog');
-    }
-
-    $record->showinprimarynavigation = $showinnav;
-    $messages[] = $showinnav
-        ? get_string('navenabledsuccess', 'local_coursecatalog')
-        : get_string('navdisabledsuccess', 'local_coursecatalog');
-}
-if ($guestaccessible !== null) {
-    if (!in_array($guestaccessible, [0, 1], true)) {
-        throw new invalid_parameter_exception('Invalid value for guestaccessible');
-    }
-
-    $existing = $DB->get_record('local_coursecatalog', ['id' => $id], 'id, isenabled', MUST_EXIST);
-
-    if ((int)$guestaccessible === 1 && empty($existing->isenabled)) {
-        throw new moodle_exception('cannotenableguestwhendisabled', 'local_coursecatalog');
-    }
-
-    $record->guestaccessible = $guestaccessible;
-    $messages[] = $guestaccessible
-        ? get_string('guestaccessenabledsuccess', 'local_coursecatalog')
-        : get_string('guestaccessdisabledsuccess', 'local_coursecatalog');
-}
-
-
-if (empty($messages)) {
-    throw new invalid_parameter_exception('No toggle field was provided');
-}
-
-// Do the update (will update only the properties you set above).
-$DB->update_record('local_coursecatalog', $record);
-
-// Redirect back with all messages joined.
 redirect(
     new moodle_url('/local/coursecatalog/pages.php'),
     implode(' ', $messages)

@@ -42,24 +42,7 @@ $form = new \local_coursecatalog\form\addpage_form();
 if ($form->is_cancelled()) {
     redirect($PAGE->url);
 } else if ($data = $form->get_data()) {
-    global $DB;
-    $desc = $data->description ?? ['text' => '', 'format' => FORMAT_HTML];
-    $descriptiontext = is_array($desc) && array_key_exists('text', $desc) ? $desc['text'] : '';
-    $descriptionformat = is_array($desc) && array_key_exists('format', $desc) ? (int)$desc['format'] : FORMAT_HTML;
-
-    $record = (object)[
-        'name' => $data->name,
-        'slug' => $data->slug,
-        'course_category' => $data->course_category,
-        'pagedescription' => $descriptiontext,
-        'pagedescriptionformat' => $descriptionformat,
-        'isenabled' => 0,
-        'timecreated' => time(),
-        'timeupdated' => time(),
-        'sortorder' => local_coursecatalog_get_next_sortorder(),
-        'showinprimarynavigation' => 0,
-    ];
-    $DB->insert_record('local_coursecatalog', $record);
+    \local_coursecatalog\manager::create_page($data);
     redirect($PAGE->url);
 }
 

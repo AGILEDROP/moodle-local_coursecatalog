@@ -55,32 +55,10 @@ if ($form->is_cancelled()) {
 } else if ($data = $form->get_data()) {
     require_sesskey();
 
-    // Ensure slug uniqueness excluding current record.
-    if (
-        $exists = $DB->record_exists_select(
-            'local_coursecatalog',
-            'slug = :slug AND id <> :id',
-            ['slug' => $data->slug, 'id' => $id]
-        )
-    ) {
+    if (!\local_coursecatalog\manager::update_page($id, $data)) {
         \core\notification::error(get_string('error:sluginuse', 'local_coursecatalog'));
-        // Re-display form with posted values.
         $form->set_data($data);
     } else {
-        $desc = $data->description ?? ['text' => '', 'format' => FORMAT_HTML];
-        $descriptiontext = is_array($desc) && array_key_exists('text', $desc) ? $desc['text'] : '';
-        $descriptionformat = is_array($desc) && array_key_exists('format', $desc) ? (int)$desc['format'] : FORMAT_HTML;
-
-        $update = (object)[
-                'id' => $id,
-                'name' => $data->name,
-                'slug' => $data->slug,
-                'course_category' => $data->course_category,
-                'pagedescription' => $descriptiontext,
-                'pagedescriptionformat' => $descriptionformat,
-                'timeupdated' => time(),
-        ];
-        $DB->update_record('local_coursecatalog', $update);
         \core\notification::success(get_string('changessaved'));
         redirect(new moodle_url('/local/coursecatalog/pages.php'));
     }
