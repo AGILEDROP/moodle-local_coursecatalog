@@ -30,7 +30,7 @@ require_once(__DIR__ . '/locallib.php');
 $slug = required_param('slug', PARAM_ALPHANUMEXT);
 global $DB, $OUTPUT;
 
-// 1) Load the record.
+// 1) Load the record (needed before login decision).
 $page = $DB->get_record(
     'local_coursecatalog',
     ['slug' => $slug],
@@ -38,12 +38,17 @@ $page = $DB->get_record(
     MUST_EXIST
 );
 
-// Login is conditional: pages with guest access enabled are open to unauthenticated users.
-if (empty($page->guestaccessible)) {
+// 2) Authentication: guest-accessible pages allow auto guest login, others require real login.
+if (!empty($page->guestaccessible)) {
+    require_login(null, true);
+} else {
     require_login();
+    if (isguestuser()) {
+        throw new moodle_exception('noguest');
+    }
 }
 
-// 2) Resolve category context (throws if category was deleted).
+// 3) Resolve category context (throws if category was deleted).
 $categoryid = (int)$page->course_category;
 $catcontext = context_coursecat::instance($categoryid, IGNORE_MISSING);
 
@@ -51,9 +56,12 @@ if (!$catcontext) {
     throw new moodle_exception('missingcategorypage', 'local_coursecatalog');
 }
 
-// 3) Handle the “disabled” flag
+// 4) Enforce view capability.
+require_capability('local/coursecatalog:view', context_system::instance());
+
+// 5) Handle the “disabled” flag
 if (empty($page->isenabled)) {
-    // 3a) Ordinary users get a friendly landing page
+    // 5a) Ordinary users get a friendly landing page
     if (!has_capability('local/coursecatalog:manage', context_system::instance())) {
         $PAGE->set_url(new moodle_url('/local/coursecatalog/view.php', ['slug' => $slug]));
         $PAGE->set_context($catcontext);
@@ -69,13 +77,13 @@ if (empty($page->isenabled)) {
         echo $OUTPUT->footer();
         exit;
     }
-    // 3b) Managers see a banner but can continue
+    // 5b) Managers see a banner but can continue
     $showpreviewbanner = true;
 } else {
     $showpreviewbanner = false;
 }
 
-// 4) Normal page rendering
+// 6) Normal page rendering
 $url = new moodle_url('/local/coursecatalog/view.php', ['slug' => $slug]);
 $PAGE->set_url($url);
 $PAGE->set_secondary_navigation(false);
@@ -91,7 +99,7 @@ $PAGE->navbar->make_active();
 
 echo $OUTPUT->header();
 
-// 5) If a preview banner is needed:
+// 7) If a preview banner is needed:
 if (!empty($showpreviewbanner)) {
     echo $OUTPUT->notification(
         get_string('previewdisablednotice', 'local_coursecatalog'),
@@ -99,7 +107,7 @@ if (!empty($showpreviewbanner)) {
     );
 }
 
-// 6) Output the HTML
+// 8) Output the HTML
 try {
     $html = local_coursecatalog_display_cards($page);
     echo $html;
