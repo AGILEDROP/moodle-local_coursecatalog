@@ -65,7 +65,13 @@ class addpage_form extends \moodleform {
 
         // 3) Page description
         $editoroptions = ['maxfiles' => 0, 'maxbytes' => 0, 'context' => context_system::instance()];
-        $mform->addElement('editor', 'pagedescription_editor', get_string('pagedescription', 'local_coursecatalog'), null, $editoroptions);
+        $mform->addElement(
+            'editor',
+            'pagedescription_editor',
+            get_string('pagedescription', 'local_coursecatalog'),
+            null,
+            $editoroptions
+        );
         $mform->setType('pagedescription_editor', PARAM_RAW);
         $mform->addHelpButton('pagedescription_editor', 'pagedescription', 'local_coursecatalog');
 

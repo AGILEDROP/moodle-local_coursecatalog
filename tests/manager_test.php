@@ -31,7 +31,6 @@ require_once(__DIR__ . '/../locallib.php');
  * @covers    \local_coursecatalog\manager
  */
 final class manager_test extends \advanced_testcase {
-
     /**
      * Insert a catalog page fixture directly into the DB.
      *
@@ -69,9 +68,7 @@ final class manager_test extends \advanced_testcase {
         ]);
     }
 
-    // ---------------------------------------------------------------
-    // toggle_page tests
-    // ---------------------------------------------------------------
+    // Toggle_page tests.
 
     /**
      * Toggling isenabled from 0 to 1 updates the record.
@@ -188,9 +185,7 @@ final class manager_test extends \advanced_testcase {
         $this->assertEquals(1, (int)$record->guestaccessible);
     }
 
-    // ---------------------------------------------------------------
-    // create_page tests
-    // ---------------------------------------------------------------
+    // Create_page tests.
 
     /**
      * create_page inserts a record with expected defaults.
@@ -264,9 +259,7 @@ final class manager_test extends \advanced_testcase {
         $this->assertEquals('', $record->pagedescription);
     }
 
-    // ---------------------------------------------------------------
-    // update_page tests
-    // ---------------------------------------------------------------
+    // Update_page tests.
 
     /**
      * update_page modifies the record and returns true.

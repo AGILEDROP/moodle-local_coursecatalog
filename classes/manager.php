@@ -16,8 +16,6 @@
 
 namespace local_coursecatalog;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Manager class encapsulating business/data logic for course catalog pages.
  *
@@ -30,7 +28,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class manager {
-
     /**
      * Toggle one or more boolean flags on a catalog page record.
      *
@@ -130,11 +127,13 @@ class manager {
     public static function update_page(int $id, \stdClass $data): bool {
         global $DB;
 
-        if ($DB->record_exists_select(
-            'local_coursecatalog',
-            'slug = :slug AND id <> :id',
-            ['slug' => $data->slug, 'id' => $id]
-        )) {
+        if (
+            $DB->record_exists_select(
+                'local_coursecatalog',
+                'slug = :slug AND id <> :id',
+                ['slug' => $data->slug, 'id' => $id]
+            )
+        ) {
             return false;
         }
 
