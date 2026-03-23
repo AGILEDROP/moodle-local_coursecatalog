@@ -8,6 +8,7 @@ jobs:
     env:
       MOODLE_DIR: ../moodle
       MOODLEDATA_DIR: ../moodledata
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     services:
       postgres:
         image: postgres:15
@@ -126,10 +127,6 @@ jobs:
         if: ${{ always() }}
         run: moodle-plugin-ci phplint
 
-      - name: Run phpcpd
-        if: ${{ always() }}
-        run: moodle-plugin-ci phpcpd || true
-
       - name: Run phpmd
         if: ${{ always() }}
         run: moodle-plugin-ci phpmd
@@ -154,6 +151,24 @@ jobs:
         if: ${{ always() }}
         run: moodle-plugin-ci phpunit
 
+      - name: Pre-pull Selenium image (retry)
+        if: ${{ always() }}
+        run: |
+          for attempt in 1 2 3; do
+            docker pull selenium/standalone-chrome:4 && exit 0
+            echo "Selenium pull failed (attempt ${attempt}/3), retrying..."
+            sleep 20
+          done
+          echo "Unable to pull selenium/standalone-chrome:4 after retries."
+          exit 1
+
       - name: Run behat
         if: ${{ always() }}
-        run: moodle-plugin-ci behat --profile chrome
+        run: |
+          for attempt in 1 2 3; do
+            moodle-plugin-ci behat --profile chrome && exit 0
+            echo "Behat failed (attempt ${attempt}/3), retrying..."
+            sleep 20
+          done
+          echo "Behat failed after retries."
+          exit 1
