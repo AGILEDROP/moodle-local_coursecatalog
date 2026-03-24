@@ -55,47 +55,45 @@ if ($form->is_cancelled()) {
 } else if ($data = $form->get_data()) {
     require_sesskey();
 
-    // Ensure slug uniqueness excluding current record.
-    if (
-        $exists = $DB->record_exists_select(
-            'local_coursecatalog',
-            'slug = :slug AND id <> :id',
-            ['slug' => $data->slug, 'id' => $id]
-        )
-    ) {
+    $editoroptions = ['maxfiles' => 0, 'maxbytes' => 0, 'context' => $syscontext];
+    $data = file_postupdate_standard_editor(
+        $data,
+        'pagedescription',
+        $editoroptions,
+        $syscontext,
+        'local_coursecatalog',
+        'pagedescription',
+        $id
+    );
+
+    if (!\local_coursecatalog\manager::update_page($id, $data)) {
         \core\notification::error(get_string('error:sluginuse', 'local_coursecatalog'));
-        // Re-display form with posted values.
         $form->set_data($data);
     } else {
-        $desc = $data->description ?? ['text' => '', 'format' => FORMAT_HTML];
-        $descriptiontext = is_array($desc) && array_key_exists('text', $desc) ? $desc['text'] : '';
-        $descriptionformat = is_array($desc) && array_key_exists('format', $desc) ? (int)$desc['format'] : FORMAT_HTML;
-
-        $update = (object)[
-                'id' => $id,
-                'name' => $data->name,
-                'slug' => $data->slug,
-                'course_category' => $data->course_category,
-                'pagedescription' => $descriptiontext,
-                'pagedescriptionformat' => $descriptionformat,
-                'timeupdated' => time(),
-        ];
-        $DB->update_record('local_coursecatalog', $update);
         \core\notification::success(get_string('changessaved'));
         redirect(new moodle_url('/local/coursecatalog/pages.php'));
     }
 }
 
 // Prefill form.
+$editoroptions = ['maxfiles' => 0, 'maxbytes' => 0, 'context' => $syscontext];
 $defaults = new stdClass();
 $defaults->id = $page->id;
 $defaults->name = $page->name;
 $defaults->slug = $page->slug;
-$defaults->description = [
-        'text'   => $page->pagedescription ?? '',
-        'format' => $page->pagedescriptionformat ?? FORMAT_HTML,
-];
+$defaults->pagedescription = $page->pagedescription ?? '';
+$defaults->pagedescriptionformat = $page->pagedescriptionformat ?? FORMAT_HTML;
 $defaults->course_category = $page->course_category;
+
+$defaults = file_prepare_standard_editor(
+    $defaults,
+    'pagedescription',
+    $editoroptions,
+    $syscontext,
+    'local_coursecatalog',
+    'pagedescription',
+    $defaults->id
+);
 
 echo $OUTPUT->header();
 $form->set_data($defaults);

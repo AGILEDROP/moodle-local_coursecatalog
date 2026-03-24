@@ -100,4 +100,7 @@ $string['toggleenableguestaccess'] = 'Enable guest access';
 $string['toggleenableinnavigation'] = 'Show in primary navigation';
 $string['toggleenablepage'] = 'Enable page';
 $string['urlslug'] = 'Slug';
+$string['viewgrid'] = 'Grid view';
+$string['viewlist'] = 'List view';
+$string['viewmode'] = 'View mode';
 $string['viewpage'] = 'View page';

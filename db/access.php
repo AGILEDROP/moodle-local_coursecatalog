@@ -34,11 +34,11 @@ $capabilities = [
                 ],
         ],
         'local/coursecatalog:view' => [
-                'riskbitmask'    => RISK_PERSONAL,
                 'captype'        => 'read',
-                'contextlevel'   => CONTEXT_COURSECAT,
+                'contextlevel'   => CONTEXT_SYSTEM,
                 'archetypes'     => [
                         'guest'      => CAP_ALLOW,
+                        'user'       => CAP_ALLOW,
                         'student'    => CAP_ALLOW,
                         'teacher'    => CAP_ALLOW,
                 ],

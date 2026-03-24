@@ -26,6 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_coursecatalog';
 $plugin->release = '1.1.0';
-$plugin->version = 2026031600;
+$plugin->version = 2026031601;
 $plugin->requires = 2024100705;
 $plugin->maturity = MATURITY_STABLE;
