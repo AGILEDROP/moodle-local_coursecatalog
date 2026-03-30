@@ -43,5 +43,40 @@ class observer {
         }
 
         local_coursecatalog_delete_by_category($categoryid);
+        self::invalidate_cache_for_category($categoryid);
+    }
+
+    /**
+     * Invalidate the course cards cache when a course or its content changes.
+     *
+     * Handles: course_created, course_updated, course_deleted, course_content_updated,
+     * course_section_created, course_section_updated, course_section_deleted,
+     * course_module_created, course_module_updated, course_module_deleted.
+     *
+     * @param \core\event\base $event
+     * @return void
+     */
+    public static function course_changed(\core\event\base $event): void {
+        $courseid = (int)$event->courseid;
+        if ($courseid <= 0) {
+            return;
+        }
+
+        global $DB;
+        $categoryid = $DB->get_field('course', 'category', ['id' => $courseid]);
+        if ($categoryid) {
+            self::invalidate_cache_for_category((int)$categoryid);
+        }
+    }
+
+    /**
+     * Purge the course cards cache for a specific category.
+     *
+     * @param int $categoryid
+     * @return void
+     */
+    private static function invalidate_cache_for_category(int $categoryid): void {
+        $cache = \cache::make('local_coursecatalog', 'coursecards');
+        $cache->delete($categoryid);
     }
 }

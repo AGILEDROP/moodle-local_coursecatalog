@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version metadata for the local_coursecatalog plugin.
+ * Cache definitions for local_coursecatalog.
  *
  * @package   local_coursecatalog
  * @copyright Agiledrop, 2026 <developer@agiledrop.com>
@@ -24,8 +24,11 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_coursecatalog';
-$plugin->release = '1.2.0';
-$plugin->version = 2026033000;
-$plugin->requires = 2024100705;
-$plugin->maturity = MATURITY_STABLE;
+$definitions = [
+    'coursecards' => [
+        'mode' => cache_store::MODE_APPLICATION,
+        'simplekeys' => true,
+        'staticacceleration' => true,
+        'ttl' => 3600,
+    ],
+];
