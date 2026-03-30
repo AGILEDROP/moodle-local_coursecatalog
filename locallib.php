@@ -24,111 +24,201 @@
  */
 use core_course\external\course_summary_exporter;
 
+/** @var int Default number of courses per page. */
+define('LOCAL_COURSECATALOG_PERPAGE_DEFAULT', 6);
+
 /**
- * Display the cards for one category‐page record.
+ * Display the cards for one category-page record with pagination.
  *
- * @param stdClass $page A record from {coursecategorypage}, with at least id, course_category, name, slug.
- * @return bool|string
+ * @param stdClass $page A record from {local_coursecatalog}, with at least id, course_category, name, slug.
+ * @return string Rendered HTML.
  * @throws \core\exception\moodle_exception
  * @throws coding_exception
  */
-function local_coursecatalog_display_cards(stdClass $page): bool|string {
+function local_coursecatalog_display_cards(stdClass $page): string {
     global $OUTPUT;
 
     $sort = optional_param('sort', 'name_asc', PARAM_ALPHANUMEXT);
     $view = optional_param('view', 'grid', PARAM_ALPHA);
+    $currentpage = optional_param('page', 0, PARAM_INT);
+    $perpage = optional_param('perpage', LOCAL_COURSECATALOG_PERPAGE_DEFAULT, PARAM_INT);
+
     if (!in_array($view, ['grid', 'list'], true)) {
         $view = 'grid';
     }
-    $descriptioncontext = \context_coursecat::instance((int)$page->course_category, IGNORE_MISSING) ?: \context_system::instance();
+    $currentpage = max(0, $currentpage);
+    $perpage = max(1, min($perpage, 100));
+
+    $descriptioncontext = \context_coursecat::instance(
+        (int)$page->course_category,
+        IGNORE_MISSING
+    ) ?: \context_system::instance();
     $formatteddescription = format_text(
         (string)($page->pagedescription ?? ''),
         (int)($page->pagedescriptionformat ?? FORMAT_HTML),
         ['context' => $descriptioncontext]
     );
 
-    // 1) Get the category object and its courses.
     $categoryid = (int)$page->course_category;
     $category = \core_course_category::get($categoryid, IGNORE_MISSING);
+
+    $baseparams = ['slug' => $page->slug, 'sort' => $sort, 'view' => $view];
 
     if (!$category) {
         $ctx = (object)[
             'courses' => [],
             'coursecount' => local_coursecatalog_get_course_count_string(0),
             'pagedescription' => $formatteddescription,
-            'sort' => local_coursecatalog_build_sort_context($page->slug, $sort),
+            'sort' => local_coursecatalog_build_sort_context($page->slug, $sort, $view),
             'view' => $view,
             'isgrid' => ($view === 'grid'),
             'islist' => ($view === 'list'),
             'gridurl' => (new moodle_url(
                 '/local/coursecatalog/view.php',
-                ['slug' => $page->slug, 'sort' => $sort, 'view' => 'grid']
+                array_merge($baseparams, ['view' => 'grid'])
             ))->out(false),
             'listurl' => (new moodle_url(
                 '/local/coursecatalog/view.php',
-                ['slug' => $page->slug, 'sort' => $sort, 'view' => 'list']
+                array_merge($baseparams, ['view' => 'list'])
             ))->out(false),
+            'pagingbar' => '',
             'missingcategory' => true,
         ];
-
         return $OUTPUT->render_from_template('local_coursecatalog/coursecatalog', $ctx);
     }
 
-    $courses = $category->get_courses();
+    // 1) Get cached course card data.
+    $allcards = local_coursecatalog_get_cached_cards($categoryid, $category);
 
-    // 2) Build the Mustache context.
-    $ctx = (object)['courses' => []];
+    // 2) Sort the cards.
+    $allcards = local_coursecatalog_sort_courses($allcards, $sort);
+
+    // 3) Total count before pagination.
+    $totalcount = count($allcards);
+
+    // 4) Slice for current page.
+    $pagecards = array_slice($allcards, $currentpage * $perpage, $perpage);
+
+    // 5) Add user-specific enrollment data to the sliced set only.
+    $pagecards = local_coursecatalog_add_enrollment_data($pagecards);
+
+    // 6) Build paging bar.
+    $pagingbarurl = new moodle_url('/local/coursecatalog/view.php', $baseparams);
+    $pagingbar = $OUTPUT->paging_bar($totalcount, $currentpage, $perpage, $pagingbarurl);
+
+    // 7) Build the Mustache context.
+    $ctx = (object)[
+        'courses' => $pagecards,
+        'coursecount' => local_coursecatalog_get_course_count_string($totalcount),
+        'pagedescription' => $formatteddescription,
+        'sort' => local_coursecatalog_build_sort_context($page->slug, $sort, $view),
+        'view' => $view,
+        'isgrid' => ($view === 'grid'),
+        'islist' => ($view === 'list'),
+        'gridurl' => (new moodle_url(
+            '/local/coursecatalog/view.php',
+            array_merge($baseparams, ['view' => 'grid'])
+        ))->out(false),
+        'listurl' => (new moodle_url(
+            '/local/coursecatalog/view.php',
+            array_merge($baseparams, ['view' => 'list'])
+        ))->out(false),
+        'pagingbar' => $pagingbar,
+    ];
+
+    return $OUTPUT->render_from_template('local_coursecatalog/coursecatalog', $ctx);
+}
+
+/**
+ * Get course card data from cache, or build and cache it.
+ *
+ * Returns user-independent card data (no enrollment info). The cache is keyed
+ * by category ID and shared across all users (APPLICATION mode).
+ *
+ * @param int $categoryid The course category ID.
+ * @param \core_course_category $category The category object.
+ * @return array Array of course card objects.
+ */
+function local_coursecatalog_get_cached_cards(int $categoryid, \core_course_category $category): array {
+    $cache = cache::make('local_coursecatalog', 'coursecards');
+    $cards = $cache->get($categoryid);
+
+    if ($cards !== false) {
+        return $cards;
+    }
+
+    $cards = local_coursecatalog_build_cards($category);
+    $cache->set($categoryid, $cards);
+
+    return $cards;
+}
+
+/**
+ * Build course card data for all visible courses in a category.
+ *
+ * Produces user-independent card objects suitable for caching. Enrollment
+ * status (buttontext, buttonurl) is NOT included here — it is added per
+ * request by {@see local_coursecatalog_add_enrollment_data()}.
+ *
+ * @param \core_course_category $category The category to build cards for.
+ * @return array Array of course card objects.
+ */
+function local_coursecatalog_build_cards(\core_course_category $category): array {
+    global $DB;
+
+    // Fetch only visible courses at the DB level.
+    $sql = "SELECT c.*
+              FROM {course} c
+             WHERE c.category = :catid
+               AND c.visible = 1
+          ORDER BY c.fullname ASC";
+    $courses = $DB->get_records_sql($sql, ['catid' => $category->id]);
+
+    $cards = [];
     foreach ($courses as $c) {
-        if (empty($c->visible)) {
-            continue;
-        }
-
         $courseimageurl = course_summary_exporter::get_course_image($c);
-        $coursectx  = context_course::instance($c->id, IGNORE_MISSING);
-        $isenrolled = $coursectx ? is_enrolled($coursectx) : false;
         $modulescount = local_coursecatalog_count_modules($c->id);
         $activitycount = local_coursecatalog_count_main_activities($c->id);
 
-        $ctx->courses[] = (object)[
-                'fullname' => format_string($c->fullname),
-                'courseimage' => $courseimageurl,
-                'summary' => shorten_text(strip_tags(format_text($c->summary, $c->summaryformat)), 500),
-                'buttontext' => $isenrolled
-                        ? get_string('start', 'local_coursecatalog')
-                        : get_string('enrolme', 'local_coursecatalog'),
-                'buttonurl' => (
-                $isenrolled
-                        ? new moodle_url('/course/view.php', ['id' => $c->id])
-                        : new moodle_url('/enrol/index.php', ['id' => $c->id])
-                )->out(false),
-                'modulescount' => local_coursecatalog_modules_label($modulescount),
-                'modulescount_int' => $modulescount,
-                'activitycount' => local_coursecatalog_modules_label($activitycount, 'activity'),
+        $cards[] = (object)[
+            'courseid' => (int)$c->id,
+            'fullname' => format_string($c->fullname),
+            'courseimage' => $courseimageurl,
+            'summary' => shorten_text(strip_tags(format_text($c->summary, $c->summaryformat)), 500),
+            'modulescount' => local_coursecatalog_modules_label($modulescount),
+            'modulescount_int' => $modulescount,
+            'activitycount' => local_coursecatalog_modules_label($activitycount, 'activity'),
         ];
     }
 
-    $ctx->courses = local_coursecatalog_sort_courses($ctx->courses, $sort);
+    return $cards;
+}
 
-    $ctx->coursecount = local_coursecatalog_get_course_count_string(count($ctx->courses));
-    $ctx->pagedescription = $formatteddescription;
-    $ctx->sort = local_coursecatalog_build_sort_context($page->slug, $sort);
-    $ctx->view = $view;
-    $ctx->isgrid = ($view === 'grid');
-    $ctx->islist = ($view === 'list');
-    $ctx->gridurl = (new moodle_url(
-        '/local/coursecatalog/view.php',
-        ['slug' => $page->slug, 'sort' => $sort, 'view' => 'grid']
-    ))->out(false);
-    $ctx->listurl = (new moodle_url(
-        '/local/coursecatalog/view.php',
-        ['slug' => $page->slug, 'sort' => $sort, 'view' => 'list']
-    ))->out(false);
+/**
+ * Add user-specific enrollment data to course cards.
+ *
+ * Adds buttontext and buttonurl to each card based on the current user's
+ * enrollment status.
+ *
+ * @param array $cards Array of course card objects (must have courseid).
+ * @return array The same array with enrollment fields added.
+ */
+function local_coursecatalog_add_enrollment_data(array $cards): array {
+    foreach ($cards as $card) {
+        $coursectx = context_course::instance($card->courseid, IGNORE_MISSING);
+        $isenrolled = $coursectx ? is_enrolled($coursectx) : false;
 
-    // 3) Render via Mustache.
-    return $OUTPUT->render_from_template(
-        'local_coursecatalog/coursecatalog',
-        $ctx
-    );
+        $card->buttontext = $isenrolled
+            ? get_string('start', 'local_coursecatalog')
+            : get_string('enrolme', 'local_coursecatalog');
+        $card->buttonurl = (
+            $isenrolled
+                ? new moodle_url('/course/view.php', ['id' => $card->courseid])
+                : new moodle_url('/enrol/index.php', ['id' => $card->courseid])
+        )->out(false);
+    }
+
+    return $cards;
 }
 
 /**
@@ -345,27 +435,29 @@ function local_coursecatalog_get_course_count_string(int $coursescount): string 
  *
  * @param string $slug Current page slug (kept in a hidden field).
  * @param string $current Current sort token (e.g. "name_asc").
+ * @param string $view Current view mode ('grid' or 'list').
  * @return array
  */
-function local_coursecatalog_build_sort_context(string $slug, string $current): array {
-    $baseurl  = new moodle_url('/local/coursecatalog/view.php', ['slug' => $slug]);
-    $options  = [
-            'name_asc' => get_string('sort_name_asc', 'local_coursecatalog'),
-            'name_desc' => get_string('sort_name_desc', 'local_coursecatalog'),
-            'modules_asc' => get_string('sort_modules_asc', 'local_coursecatalog'),
-            'modules_desc' => get_string('sort_modules_desc', 'local_coursecatalog'),
+function local_coursecatalog_build_sort_context(string $slug, string $current, string $view = 'grid'): array {
+    $baseurl = new moodle_url('/local/coursecatalog/view.php', ['slug' => $slug]);
+    $options = [
+        'name_asc' => get_string('sort_name_asc', 'local_coursecatalog'),
+        'name_desc' => get_string('sort_name_desc', 'local_coursecatalog'),
+        'modules_asc' => get_string('sort_modules_asc', 'local_coursecatalog'),
+        'modules_desc' => get_string('sort_modules_desc', 'local_coursecatalog'),
     ];
 
     $ctx = [
-            'action' => $baseurl->out(false),
-            'slug' => $slug,
-            'options' => [],
+        'action' => $baseurl->out(false),
+        'slug' => $slug,
+        'view' => $view,
+        'options' => [],
     ];
     foreach ($options as $value => $label) {
         $ctx['options'][] = [
-                'value' => $value,
-                'label' => $label,
-                'selected' => ($value === $current),
+            'value' => $value,
+            'label' => $label,
+            'selected' => ($value === $current),
         ];
     }
     return $ctx;

@@ -84,7 +84,15 @@ if (empty($page->isenabled)) {
 }
 
 // 6) Normal page rendering
-$url = new moodle_url('/local/coursecatalog/view.php', ['slug' => $slug]);
+$sort = optional_param('sort', 'name_asc', PARAM_ALPHANUMEXT);
+$view = optional_param('view', 'grid', PARAM_ALPHA);
+$currentpage = optional_param('page', 0, PARAM_INT);
+$perpage = optional_param('perpage', LOCAL_COURSECATALOG_PERPAGE_DEFAULT, PARAM_INT);
+$urlparams = ['slug' => $slug, 'sort' => $sort, 'view' => $view, 'page' => $currentpage];
+if ($perpage != LOCAL_COURSECATALOG_PERPAGE_DEFAULT) {
+    $urlparams['perpage'] = $perpage;
+}
+$url = new moodle_url('/local/coursecatalog/view.php', $urlparams);
 $PAGE->set_url($url);
 $PAGE->set_secondary_navigation(false);
 $PAGE->set_context($catcontext);
