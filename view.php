@@ -96,6 +96,7 @@ $url = new moodle_url('/local/coursecatalog/view.php', $urlparams);
 $PAGE->set_url($url);
 $PAGE->set_secondary_navigation(false);
 $PAGE->set_context($catcontext);
+$PAGE->set_primary_active_tab('local_coursecatalog_' . $page->id);
 $PAGE->set_title(format_string($page->name));
 $PAGE->set_heading(format_string($page->name));
 $PAGE->navbar->add(
