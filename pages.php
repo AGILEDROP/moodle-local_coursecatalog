@@ -107,15 +107,40 @@ foreach ($pages as $index => $page) {
     );
 
     // Subcategories included.
+    $includesub = !empty($page->includesubcategories);
+    $selectedcats = $includesub
+        ? \local_coursecatalog\manager::get_selected_categories((int)$page->id)
+        : [];
+
     echo html_writer::tag(
         'p',
         get_string('includesubcategories', 'local_coursecatalog')
-            . ': ' . get_string(!empty($page->includesubcategories) ? 'yes' : 'no')
+            . ': ' . get_string($includesub ? 'yes' : 'no')
     );
 
-    // Count only visible courses (include subcategories if enabled).
+    if ($includesub && !empty($selectedcats)) {
+        $subcatnames = [];
+        foreach ($selectedcats as $subcatid) {
+            if (isset($catlist[(int)$subcatid])) {
+                $subcatnames[] = $catlist[(int)$subcatid];
+            }
+        }
+        if (!empty($subcatnames)) {
+            echo html_writer::tag(
+                'p',
+                get_string('selectedsubcategories', 'local_coursecatalog')
+                    . ': ' . implode(', ', $subcatnames)
+            );
+        }
+    } else if ($includesub) {
+        echo html_writer::tag(
+            'p',
+            get_string('selectedsubcategories', 'local_coursecatalog')
+                . ': ' . get_string('all')
+        );
+    }
     $categoryids = $categoryexists
-        ? local_coursecatalog_get_category_ids($categoryid, !empty($page->includesubcategories))
+        ? local_coursecatalog_get_category_ids($categoryid, $includesub, $selectedcats)
         : [];
     if (empty($categoryids)) {
         $count = 0;

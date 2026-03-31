@@ -115,7 +115,13 @@ class manager {
             'includesubcategories' => !empty($data->includesubcategories) ? 1 : 0,
         ];
 
-        return $DB->insert_record('local_coursecatalog', $record);
+        $pageid = $DB->insert_record('local_coursecatalog', $record);
+
+        if (!empty($data->includesubcategories) && !empty($data->selectedsubcategories)) {
+            self::save_selected_categories($pageid, $data->selectedsubcategories);
+        }
+
+        return $pageid;
     }
 
     /**
@@ -150,6 +156,66 @@ class manager {
         ];
 
         $DB->update_record('local_coursecatalog', $update);
+
+        if (!empty($data->includesubcategories)) {
+            self::save_selected_categories($id, $data->selectedsubcategories ?? []);
+        } else {
+            self::delete_selected_categories($id);
+        }
+
         return true;
+    }
+
+    /**
+     * Save selected subcategories for a catalog page.
+     *
+     * Replaces all existing selections with the provided set.
+     *
+     * @param int $pageid The catalog page ID.
+     * @param array $categoryids Array of category IDs to associate.
+     * @return void
+     */
+    public static function save_selected_categories(int $pageid, array $categoryids): void {
+        global $DB;
+
+        $DB->delete_records('local_coursecatalog_cats', ['pageid' => $pageid]);
+
+        foreach ($categoryids as $categoryid) {
+            $categoryid = (int)$categoryid;
+            if ($categoryid <= 0) {
+                continue;
+            }
+            $DB->insert_record('local_coursecatalog_cats', (object)[
+                'pageid' => $pageid,
+                'categoryid' => $categoryid,
+            ]);
+        }
+    }
+
+    /**
+     * Delete all selected subcategories for a catalog page.
+     *
+     * @param int $pageid The catalog page ID.
+     * @return void
+     */
+    public static function delete_selected_categories(int $pageid): void {
+        global $DB;
+        $DB->delete_records('local_coursecatalog_cats', ['pageid' => $pageid]);
+    }
+
+    /**
+     * Get selected subcategory IDs for a catalog page.
+     *
+     * @param int $pageid The catalog page ID.
+     * @return int[] Array of category IDs.
+     */
+    public static function get_selected_categories(int $pageid): array {
+        global $DB;
+        return $DB->get_fieldset_select(
+            'local_coursecatalog_cats',
+            'categoryid',
+            'pageid = :pageid',
+            ['pageid' => $pageid]
+        );
     }
 }
