@@ -112,6 +112,7 @@ class manager {
             'timeupdated' => time(),
             'sortorder' => \local_coursecatalog_get_next_sortorder(),
             'showinprimarynavigation' => 0,
+            'includesubcategories' => !empty($data->includesubcategories) ? 1 : 0,
         ];
 
         return $DB->insert_record('local_coursecatalog', $record);
@@ -144,6 +145,7 @@ class manager {
             'course_category' => $data->course_category,
             'pagedescription' => $data->pagedescription ?? '',
             'pagedescriptionformat' => $data->pagedescriptionformat ?? FORMAT_HTML,
+            'includesubcategories' => !empty($data->includesubcategories) ? 1 : 0,
             'timeupdated' => time(),
         ];
 

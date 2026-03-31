@@ -158,5 +158,23 @@ function xmldb_local_coursecatalog_upgrade(int $oldversion): bool {
         upgrade_plugin_savepoint(true, 2026031600, 'local', 'coursecatalog');
     }
 
+    if ($oldversion < 2026033001) {
+        $table = new xmldb_table('local_coursecatalog');
+        $field = new xmldb_field(
+            'includesubcategories',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'guestaccessible'
+        );
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2026033001, 'local', 'coursecatalog');
+    }
+
     return true;
 }

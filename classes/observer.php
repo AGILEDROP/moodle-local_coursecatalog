@@ -47,6 +47,21 @@ class observer {
     }
 
     /**
+     * Purge all course card caches when a category is updated (e.g. moved).
+     *
+     * When a category moves, the old and new parent trees both change.
+     * The event does not carry the old parent ID, so we purge the entire
+     * course cards cache to guarantee correctness.
+     *
+     * @param \core\event\course_category_updated $event
+     * @return void
+     */
+    public static function course_category_updated(\core\event\course_category_updated $event): void {
+        $cache = \cache::make('local_coursecatalog', 'coursecards');
+        $cache->purge();
+    }
+
+    /**
      * Invalidate the course cards cache when a course or its content changes.
      *
      * Handles: course_created, course_updated, course_deleted, course_content_updated,
@@ -65,7 +80,26 @@ class observer {
         global $DB;
         $categoryid = $DB->get_field('course', 'category', ['id' => $courseid]);
         if ($categoryid) {
-            self::invalidate_cache_for_category((int)$categoryid);
+            self::invalidate_cache_for_category_and_ancestors((int)$categoryid);
+        }
+    }
+
+    /**
+     * Purge the course cards cache for a category and all its ancestors.
+     *
+     * Ancestor caches must be invalidated because parent categories with
+     * includesubcategories enabled cache courses from their descendants.
+     *
+     * @param int $categoryid
+     * @return void
+     */
+    private static function invalidate_cache_for_category_and_ancestors(int $categoryid): void {
+        $cache = \cache::make('local_coursecatalog', 'coursecards');
+        $cat = \core_course_category::get($categoryid, IGNORE_MISSING);
+
+        while ($cat) {
+            self::delete_cache_keys($cache, (int)$cat->id);
+            $cat = $cat->parent ? \core_course_category::get($cat->parent, IGNORE_MISSING) : null;
         }
     }
 
@@ -77,6 +111,17 @@ class observer {
      */
     private static function invalidate_cache_for_category(int $categoryid): void {
         $cache = \cache::make('local_coursecatalog', 'coursecards');
-        $cache->delete($categoryid);
+        self::delete_cache_keys($cache, $categoryid);
+    }
+
+    /**
+     * Delete both plain and subcategory cache keys for a category.
+     *
+     * @param \cache $cache The cache instance.
+     * @param int $categoryid The category ID.
+     * @return void
+     */
+    private static function delete_cache_keys(\cache $cache, int $categoryid): void {
+        $cache->delete_many([$categoryid, $categoryid . '_sub']);
     }
 }

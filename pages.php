@@ -105,11 +105,25 @@ foreach ($pages as $index => $page) {
         get_string('coursecategory', 'local_coursecatalog')
             . ': ' . $categoryname
     );
-    // Count only visible courses.
-    $count = $categoryexists ? $DB->count_records('course', [
-            'category' => $categoryid,
-            'visible' => 1,
-    ]) : 0;
+
+    // Subcategories included.
+    echo html_writer::tag(
+        'p',
+        get_string('includesubcategories', 'local_coursecatalog')
+            . ': ' . get_string(!empty($page->includesubcategories) ? 'yes' : 'no')
+    );
+
+    // Count only visible courses (include subcategories if enabled).
+    $categoryids = $categoryexists
+        ? local_coursecatalog_get_category_ids($categoryid, !empty($page->includesubcategories))
+        : [];
+    if (empty($categoryids)) {
+        $count = 0;
+    } else {
+        [$insql, $params] = $DB->get_in_or_equal($categoryids, SQL_PARAMS_NAMED);
+        $params['visible'] = 1;
+        $count = $DB->count_records_select('course', "category $insql AND visible = :visible", $params);
+    }
     echo html_writer::tag(
         'p',
         get_string('coursescount', 'local_coursecatalog', $count)

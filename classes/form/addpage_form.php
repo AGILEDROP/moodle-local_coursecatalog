@@ -86,6 +86,15 @@ class addpage_form extends \moodleform {
         $mform->addRule('course_category', null, 'required', null, 'client');
         $mform->addHelpButton('course_category', 'coursecategory', 'local_coursecatalog');
 
+        // 5) Include subcategories checkbox.
+        $mform->addElement(
+            'advcheckbox',
+            'includesubcategories',
+            get_string('includesubcategories', 'local_coursecatalog'),
+            get_string('includesubcategories_label', 'local_coursecatalog')
+        );
+        $mform->addHelpButton('includesubcategories', 'includesubcategories', 'local_coursecatalog');
+
         // Submit button.
         $label = $isupdate ? get_string('savechanges') : get_string('addnewpage', 'local_coursecatalog');
         $this->add_action_buttons(true, $label);

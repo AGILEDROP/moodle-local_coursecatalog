@@ -88,7 +88,8 @@ function local_coursecatalog_display_cards(stdClass $page): string {
     }
 
     // 1) Get cached course card data.
-    $allcards = local_coursecatalog_get_cached_cards($categoryid, $category);
+    $includesubcategories = !empty($page->includesubcategories);
+    $allcards = local_coursecatalog_get_cached_cards($categoryid, $category, $includesubcategories);
 
     // 2) Sort the cards.
     $allcards = local_coursecatalog_sort_courses($allcards, $sort);
@@ -130,25 +131,55 @@ function local_coursecatalog_display_cards(stdClass $page): string {
 }
 
 /**
+ * Get all category IDs to query courses from.
+ *
+ * Returns just the given category ID, or the category plus all its
+ * descendants when subcategories are included.
+ *
+ * @param int $categoryid The root category ID.
+ * @param bool $includesubcategories Whether to include descendant categories.
+ * @return int[] Category IDs, or empty array if the category does not exist.
+ */
+function local_coursecatalog_get_category_ids(int $categoryid, bool $includesubcategories = false): array {
+    $category = \core_course_category::get($categoryid, IGNORE_MISSING);
+    if (!$category) {
+        return [];
+    }
+    if ($includesubcategories) {
+        $ids = $category->get_all_children_ids();
+        $ids[] = $categoryid;
+        return $ids;
+    }
+    return [$categoryid];
+}
+
+/**
  * Get course card data from cache, or build and cache it.
  *
  * Returns user-independent card data (no enrollment info). The cache is keyed
- * by category ID and shared across all users (APPLICATION mode).
+ * by category ID (with a suffix for subcategory inclusion) and shared across
+ * all users (APPLICATION mode).
  *
  * @param int $categoryid The course category ID.
  * @param \core_course_category $category The category object.
+ * @param bool $includesubcategories Whether to include courses from subcategories.
  * @return array Array of course card objects.
  */
-function local_coursecatalog_get_cached_cards(int $categoryid, \core_course_category $category): array {
+function local_coursecatalog_get_cached_cards(
+    int $categoryid,
+    \core_course_category $category,
+    bool $includesubcategories = false
+): array {
     $cache = cache::make('local_coursecatalog', 'coursecards');
-    $cards = $cache->get($categoryid);
+    $cachekey = $categoryid . ($includesubcategories ? '_sub' : '');
+    $cards = $cache->get($cachekey);
 
     if ($cards !== false) {
         return $cards;
     }
 
-    $cards = local_coursecatalog_build_cards($category);
-    $cache->set($categoryid, $cards);
+    $cards = local_coursecatalog_build_cards($category, $includesubcategories);
+    $cache->set($cachekey, $cards);
 
     return $cards;
 }
@@ -161,18 +192,28 @@ function local_coursecatalog_get_cached_cards(int $categoryid, \core_course_cate
  * request by {@see local_coursecatalog_add_enrollment_data()}.
  *
  * @param \core_course_category $category The category to build cards for.
+ * @param bool $includesubcategories Whether to include courses from subcategories.
  * @return array Array of course card objects.
  */
-function local_coursecatalog_build_cards(\core_course_category $category): array {
+function local_coursecatalog_build_cards(
+    \core_course_category $category,
+    bool $includesubcategories = false
+): array {
     global $DB;
 
-    // Fetch only visible courses at the DB level.
+    $categoryids = local_coursecatalog_get_category_ids((int)$category->id, $includesubcategories);
+    if (empty($categoryids)) {
+        return [];
+    }
+
+    [$insql, $params] = $DB->get_in_or_equal($categoryids, SQL_PARAMS_NAMED);
     $sql = "SELECT c.*
               FROM {course} c
-             WHERE c.category = :catid
+             WHERE c.category $insql
                AND c.visible = 1
           ORDER BY c.fullname ASC";
-    $courses = $DB->get_records_sql($sql, ['catid' => $category->id]);
+
+    $courses = $DB->get_records_sql($sql, $params);
 
     $cards = [];
     foreach ($courses as $c) {
