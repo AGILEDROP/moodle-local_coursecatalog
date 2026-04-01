@@ -218,4 +218,42 @@ class manager {
             ['pageid' => $pageid]
         );
     }
+
+    /**
+     * Remove stale subcategory selections from all pages.
+     *
+     * For each page with includesubcategories enabled and specific selections,
+     * checks that every selected category is still a descendant of the page's
+     * root category. Removes any that are not.
+     *
+     * @return void
+     */
+    public static function clean_stale_selections(): void {
+        global $DB;
+
+        $pages = $DB->get_records('local_coursecatalog', ['includesubcategories' => 1]);
+        foreach ($pages as $page) {
+            $selected = self::get_selected_categories((int)$page->id);
+            if (empty($selected)) {
+                continue;
+            }
+
+            $rootcategory = \core_course_category::get((int)$page->course_category, IGNORE_MISSING);
+            if (!$rootcategory) {
+                // Root category gone — clear all selections.
+                self::delete_selected_categories((int)$page->id);
+                continue;
+            }
+
+            $validchildren = array_map('intval', $rootcategory->get_all_children_ids());
+            foreach ($selected as $catid) {
+                if (!in_array((int)$catid, $validchildren, true)) {
+                    $DB->delete_records('local_coursecatalog_cats', [
+                        'pageid' => (int)$page->id,
+                        'categoryid' => (int)$catid,
+                    ]);
+                }
+            }
+        }
+    }
 }

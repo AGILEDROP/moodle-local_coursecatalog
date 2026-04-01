@@ -43,6 +43,7 @@ class observer {
         }
 
         local_coursecatalog_delete_by_category($categoryid);
+        \local_coursecatalog\manager::clean_stale_selections();
         self::purge_coursecards_cache();
     }
 
@@ -57,6 +58,7 @@ class observer {
      * @return void
      */
     public static function course_category_updated(\core\event\course_category_updated $event): void {
+        \local_coursecatalog\manager::clean_stale_selections();
         self::purge_coursecards_cache();
     }
 
