@@ -44,12 +44,8 @@ class addpage_form extends \moodleform {
      * Define the form elements and structure.
      */
     public function definition() {
-        global $PAGE;
         $mform = $this->_form;
         $isupdate = !empty($this->_customdata['isupdate']);
-
-        // Load JS to auto-reload subcategories when root category changes.
-        $PAGE->requires->js_call_amd('local_coursecatalog/categoryselect', 'init');
 
         // Hidden id (used on edit).
         $mform->addElement('hidden', 'id');
@@ -79,18 +75,19 @@ class addpage_form extends \moodleform {
         $mform->setType('pagedescription_editor', PARAM_RAW);
         $mform->addHelpButton('pagedescription_editor', 'pagedescription', 'local_coursecatalog');
 
-        // 4) Category dropdown.
-        $categories = \core_course_category::make_categories_list();
+        // 4) Category dropdown with empty default.
+        $categories = ['' => get_string('choosedots')] + \core_course_category::make_categories_list();
         $mform->addElement(
             'select',
             'course_category',
             get_string('coursecategory', 'local_coursecatalog'),
-            $categories
+            $categories,
+            ['onchange' => 'document.getElementById("id_updatesubcategories").click();']
         );
         $mform->addRule('course_category', null, 'required', null, 'client');
         $mform->addHelpButton('course_category', 'coursecategory', 'local_coursecatalog');
 
-        // No-submit button to reload subcategories when root category changes.
+        // Hidden no-submit button — triggered by onchange on the category dropdown.
         $mform->registerNoSubmitButton('updatesubcategories');
         $mform->addElement(
             'submit',
