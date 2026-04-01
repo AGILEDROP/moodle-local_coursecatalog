@@ -43,7 +43,23 @@ class observer {
         }
 
         local_coursecatalog_delete_by_category($categoryid);
-        self::invalidate_cache_for_category($categoryid);
+        \local_coursecatalog\manager::clean_stale_selections();
+        self::purge_coursecards_cache();
+    }
+
+    /**
+     * Purge all course card caches when a category is updated (e.g. moved).
+     *
+     * When a category moves, the old and new parent trees both change.
+     * The event does not carry the old parent ID, so we purge the entire
+     * course cards cache to guarantee correctness.
+     *
+     * @param \core\event\course_category_updated $event
+     * @return void
+     */
+    public static function course_category_updated(\core\event\course_category_updated $event): void {
+        \local_coursecatalog\manager::clean_stale_selections();
+        self::purge_coursecards_cache();
     }
 
     /**
@@ -62,21 +78,22 @@ class observer {
             return;
         }
 
-        global $DB;
-        $categoryid = $DB->get_field('course', 'category', ['id' => $courseid]);
-        if ($categoryid) {
-            self::invalidate_cache_for_category((int)$categoryid);
-        }
+        // Purge entire cache because custom subcategory selections (_sel_ keys)
+        // cannot be enumerated for targeted deletion.
+        self::purge_coursecards_cache();
     }
 
     /**
-     * Purge the course cards cache for a specific category.
+     * Purge the entire course cards cache.
      *
-     * @param int $categoryid
+     * Used when changes could affect any page's cached data, e.g. when courses
+     * or categories change and custom subcategory selections make targeted
+     * invalidation impractical.
+     *
      * @return void
      */
-    private static function invalidate_cache_for_category(int $categoryid): void {
+    private static function purge_coursecards_cache(): void {
         $cache = \cache::make('local_coursecatalog', 'coursecards');
-        $cache->delete($categoryid);
+        $cache->purge();
     }
 }

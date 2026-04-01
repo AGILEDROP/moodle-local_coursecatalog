@@ -84,6 +84,8 @@ $defaults->slug = $page->slug;
 $defaults->pagedescription = $page->pagedescription ?? '';
 $defaults->pagedescriptionformat = $page->pagedescriptionformat ?? FORMAT_HTML;
 $defaults->course_category = $page->course_category;
+$defaults->includesubcategories = !empty($page->includesubcategories) ? 1 : 0;
+$defaults->selectedsubcategories = \local_coursecatalog\manager::get_selected_categories((int)$page->id);
 
 $defaults = file_prepare_standard_editor(
     $defaults,

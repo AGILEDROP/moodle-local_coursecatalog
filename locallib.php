@@ -88,7 +88,11 @@ function local_coursecatalog_display_cards(stdClass $page): string {
     }
 
     // 1) Get cached course card data.
-    $allcards = local_coursecatalog_get_cached_cards($categoryid, $category);
+    $includesubcategories = !empty($page->includesubcategories);
+    $selectedcategories = $includesubcategories
+        ? \local_coursecatalog\manager::get_selected_categories((int)$page->id)
+        : [];
+    $allcards = local_coursecatalog_get_cached_cards($categoryid, $category, $includesubcategories, $selectedcategories);
 
     // 2) Sort the cards.
     $allcards = local_coursecatalog_sort_courses($allcards, $sort);
@@ -130,25 +134,84 @@ function local_coursecatalog_display_cards(stdClass $page): string {
 }
 
 /**
+ * Get all category IDs to query courses from.
+ *
+ * Behaviour depends on the page configuration:
+ * - Subcategories disabled: returns only the root category ID.
+ * - Subcategories enabled with specific selections: returns the root
+ *   category plus the selected subcategory IDs.
+ * - Subcategories enabled with no selections: returns the root category
+ *   plus all its descendants (backwards-compatible fallback).
+ *
+ * @param int $categoryid The root category ID.
+ * @param bool $includesubcategories Whether subcategories are enabled.
+ * @param int[] $selectedcategories Explicitly selected subcategory IDs (from the related table).
+ * @return int[] Category IDs, or empty array if the category does not exist.
+ */
+function local_coursecatalog_get_category_ids(
+    int $categoryid,
+    bool $includesubcategories = false,
+    array $selectedcategories = []
+): array {
+    $category = \core_course_category::get($categoryid, IGNORE_MISSING);
+    if (!$category) {
+        return [];
+    }
+    if (!$includesubcategories) {
+        return [$categoryid];
+    }
+    // Specific subcategories selected — use those plus the root.
+    if (!empty($selectedcategories)) {
+        $ids = array_map('intval', $selectedcategories);
+        if (!in_array($categoryid, $ids, true)) {
+            $ids[] = $categoryid;
+        }
+        return $ids;
+    }
+    // No specific selection — include all descendants.
+    $ids = $category->get_all_children_ids();
+    $ids[] = $categoryid;
+    return $ids;
+}
+
+/**
  * Get course card data from cache, or build and cache it.
  *
  * Returns user-independent card data (no enrollment info). The cache is keyed
- * by category ID and shared across all users (APPLICATION mode).
+ * by category ID with a suffix reflecting the subcategory mode and selection.
  *
  * @param int $categoryid The course category ID.
  * @param \core_course_category $category The category object.
+ * @param bool $includesubcategories Whether to include courses from subcategories.
+ * @param int[] $selectedcategories Explicitly selected subcategory IDs.
  * @return array Array of course card objects.
  */
-function local_coursecatalog_get_cached_cards(int $categoryid, \core_course_category $category): array {
+function local_coursecatalog_get_cached_cards(
+    int $categoryid,
+    \core_course_category $category,
+    bool $includesubcategories = false,
+    array $selectedcategories = []
+): array {
     $cache = cache::make('local_coursecatalog', 'coursecards');
-    $cards = $cache->get($categoryid);
 
+    // Build a deterministic cache key that reflects the exact category set.
+    if (!$includesubcategories) {
+        $cachekey = (string)$categoryid;
+    } else if (!empty($selectedcategories)) {
+        $sorted = $selectedcategories;
+        sort($sorted, SORT_NUMERIC);
+        $cachekey = $categoryid . '_sel_' . implode('_', $sorted);
+    } else {
+        $cachekey = $categoryid . '_sub';
+    }
+
+    $cards = $cache->get($cachekey);
     if ($cards !== false) {
         return $cards;
     }
 
-    $cards = local_coursecatalog_build_cards($category);
-    $cache->set($categoryid, $cards);
+    $cards = local_coursecatalog_build_cards($category, $includesubcategories, $selectedcategories);
+    $cache->set($cachekey, $cards);
 
     return $cards;
 }
@@ -161,18 +224,34 @@ function local_coursecatalog_get_cached_cards(int $categoryid, \core_course_cate
  * request by {@see local_coursecatalog_add_enrollment_data()}.
  *
  * @param \core_course_category $category The category to build cards for.
+ * @param bool $includesubcategories Whether to include courses from subcategories.
+ * @param int[] $selectedcategories Explicitly selected subcategory IDs.
  * @return array Array of course card objects.
  */
-function local_coursecatalog_build_cards(\core_course_category $category): array {
+function local_coursecatalog_build_cards(
+    \core_course_category $category,
+    bool $includesubcategories = false,
+    array $selectedcategories = []
+): array {
     global $DB;
 
-    // Fetch only visible courses at the DB level.
+    $categoryids = local_coursecatalog_get_category_ids(
+        (int)$category->id,
+        $includesubcategories,
+        $selectedcategories
+    );
+    if (empty($categoryids)) {
+        return [];
+    }
+
+    [$insql, $params] = $DB->get_in_or_equal($categoryids, SQL_PARAMS_NAMED);
     $sql = "SELECT c.*
               FROM {course} c
-             WHERE c.category = :catid
+             WHERE c.category $insql
                AND c.visible = 1
           ORDER BY c.fullname ASC";
-    $courses = $DB->get_records_sql($sql, ['catid' => $category->id]);
+
+    $courses = $DB->get_records_sql($sql, $params);
 
     $cards = [];
     foreach ($courses as $c) {
@@ -327,6 +406,12 @@ function local_coursecatalog_move_page(int $pageid, string $direction): bool {
  */
 function local_coursecatalog_delete_by_category(int $categoryid) {
     global $DB;
+    // Delete related subcategory selections first.
+    $pageids = $DB->get_fieldset_select('local_coursecatalog', 'id', 'course_category = :catid', ['catid' => $categoryid]);
+    if (!empty($pageids)) {
+        [$insql, $params] = $DB->get_in_or_equal($pageids, SQL_PARAMS_NAMED);
+        $DB->delete_records_select('local_coursecatalog_cats', "pageid $insql", $params);
+    }
     $DB->delete_records('local_coursecatalog', ['course_category' => $categoryid]);
 }
 

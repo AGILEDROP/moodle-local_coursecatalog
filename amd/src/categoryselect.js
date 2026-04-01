@@ -1,4 +1,3 @@
-<?php
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,17 +14,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version metadata for the local_coursecatalog plugin.
+ * Triggers form reload when the root category dropdown changes,
+ * so the subcategory multi-select is refreshed.
  *
- * @package   local_coursecatalog
- * @copyright Agiledrop, 2026 <developer@agiledrop.com>
- * @author    Matej Pal <matej.pal@agiledrop.com>
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @module     local_coursecatalog/categoryselect
+ * @copyright  Agiledrop, 2026 <developer@agiledrop.com>
+ * @author     Matej Pal <matej.pal@agiledrop.com>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
+export const init = () => {
+    const categorySelect = document.getElementById('id_course_category');
+    const reloadButton = document.getElementById('id_updatesubcategories');
 
-$plugin->component = 'local_coursecatalog';
-$plugin->release = '1.2.0';
-$plugin->version = 2026033100;
-$plugin->requires = 2024100705;
-$plugin->maturity = MATURITY_STABLE;
+    if (!categorySelect || !reloadButton) {
+        return;
+    }
+
+    categorySelect.addEventListener('change', () => {
+        reloadButton.click();
+    });
+};

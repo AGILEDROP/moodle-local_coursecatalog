@@ -112,9 +112,16 @@ class manager {
             'timeupdated' => time(),
             'sortorder' => \local_coursecatalog_get_next_sortorder(),
             'showinprimarynavigation' => 0,
+            'includesubcategories' => !empty($data->includesubcategories) ? 1 : 0,
         ];
 
-        return $DB->insert_record('local_coursecatalog', $record);
+        $pageid = $DB->insert_record('local_coursecatalog', $record);
+
+        if (!empty($data->includesubcategories) && !empty($data->selectedsubcategories)) {
+            self::save_selected_categories($pageid, $data->selectedsubcategories);
+        }
+
+        return $pageid;
     }
 
     /**
@@ -144,10 +151,109 @@ class manager {
             'course_category' => $data->course_category,
             'pagedescription' => $data->pagedescription ?? '',
             'pagedescriptionformat' => $data->pagedescriptionformat ?? FORMAT_HTML,
+            'includesubcategories' => !empty($data->includesubcategories) ? 1 : 0,
             'timeupdated' => time(),
         ];
 
         $DB->update_record('local_coursecatalog', $update);
+
+        if (!empty($data->includesubcategories)) {
+            self::save_selected_categories($id, $data->selectedsubcategories ?? []);
+        } else {
+            self::delete_selected_categories($id);
+        }
+
         return true;
+    }
+
+    /**
+     * Save selected subcategories for a catalog page.
+     *
+     * Replaces all existing selections with the provided set.
+     *
+     * @param int $pageid The catalog page ID.
+     * @param array $categoryids Array of category IDs to associate.
+     * @return void
+     */
+    public static function save_selected_categories(int $pageid, array $categoryids): void {
+        global $DB;
+
+        $DB->delete_records('local_coursecatalog_cats', ['pageid' => $pageid]);
+
+        foreach ($categoryids as $categoryid) {
+            $categoryid = (int)$categoryid;
+            if ($categoryid <= 0) {
+                continue;
+            }
+            $DB->insert_record('local_coursecatalog_cats', (object)[
+                'pageid' => $pageid,
+                'categoryid' => $categoryid,
+            ]);
+        }
+    }
+
+    /**
+     * Delete all selected subcategories for a catalog page.
+     *
+     * @param int $pageid The catalog page ID.
+     * @return void
+     */
+    public static function delete_selected_categories(int $pageid): void {
+        global $DB;
+        $DB->delete_records('local_coursecatalog_cats', ['pageid' => $pageid]);
+    }
+
+    /**
+     * Get selected subcategory IDs for a catalog page.
+     *
+     * @param int $pageid The catalog page ID.
+     * @return int[] Array of category IDs.
+     */
+    public static function get_selected_categories(int $pageid): array {
+        global $DB;
+        return $DB->get_fieldset_select(
+            'local_coursecatalog_cats',
+            'categoryid',
+            'pageid = :pageid',
+            ['pageid' => $pageid]
+        );
+    }
+
+    /**
+     * Remove stale subcategory selections from all pages.
+     *
+     * For each page with includesubcategories enabled and specific selections,
+     * checks that every selected category is still a descendant of the page's
+     * root category. Removes any that are not.
+     *
+     * @return void
+     */
+    public static function clean_stale_selections(): void {
+        global $DB;
+
+        $pages = $DB->get_records('local_coursecatalog', ['includesubcategories' => 1]);
+        foreach ($pages as $page) {
+            $selected = self::get_selected_categories((int)$page->id);
+            if (empty($selected)) {
+                continue;
+            }
+
+            $rootcategory = \core_course_category::get((int)$page->course_category, IGNORE_MISSING);
+            if (!$rootcategory) {
+                // Root category gone — clear all selections.
+                self::delete_selected_categories((int)$page->id);
+                continue;
+            }
+
+            $validchildren = array_map('intval', $rootcategory->get_all_children_ids());
+            foreach ($selected as $catid) {
+                if (!in_array((int)$catid, $validchildren, true)) {
+                    $DB->delete_records('local_coursecatalog_cats', [
+                        'pageid' => (int)$page->id,
+                        'categoryid' => (int)$catid,
+                    ]);
+                }
+            }
+        }
     }
 }

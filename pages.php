@@ -105,11 +105,50 @@ foreach ($pages as $index => $page) {
         get_string('coursecategory', 'local_coursecatalog')
             . ': ' . $categoryname
     );
-    // Count only visible courses.
-    $count = $categoryexists ? $DB->count_records('course', [
-            'category' => $categoryid,
-            'visible' => 1,
-    ]) : 0;
+
+    // Subcategories included.
+    $includesub = !empty($page->includesubcategories);
+    $selectedcats = $includesub
+        ? \local_coursecatalog\manager::get_selected_categories((int)$page->id)
+        : [];
+
+    echo html_writer::tag(
+        'p',
+        get_string('includesubcategories', 'local_coursecatalog')
+            . ': ' . get_string($includesub ? 'yes' : 'no')
+    );
+
+    if ($includesub && !empty($selectedcats)) {
+        $subcatnames = [];
+        foreach ($selectedcats as $subcatid) {
+            if (isset($catlist[(int)$subcatid])) {
+                $subcatnames[] = $catlist[(int)$subcatid];
+            }
+        }
+        if (!empty($subcatnames)) {
+            echo html_writer::tag(
+                'p',
+                get_string('selectedsubcategories', 'local_coursecatalog')
+                    . ': ' . implode(', ', $subcatnames)
+            );
+        }
+    } else if ($includesub) {
+        echo html_writer::tag(
+            'p',
+            get_string('selectedsubcategories', 'local_coursecatalog')
+                . ': ' . get_string('all')
+        );
+    }
+    $categoryids = $categoryexists
+        ? local_coursecatalog_get_category_ids($categoryid, $includesub, $selectedcats)
+        : [];
+    if (empty($categoryids)) {
+        $count = 0;
+    } else {
+        [$insql, $params] = $DB->get_in_or_equal($categoryids, SQL_PARAMS_NAMED);
+        $params['visible'] = 1;
+        $count = $DB->count_records_select('course', "category $insql AND visible = :visible", $params);
+    }
     echo html_writer::tag(
         'p',
         get_string('coursescount', 'local_coursecatalog', $count)

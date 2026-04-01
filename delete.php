@@ -34,7 +34,8 @@ $syscontext = context_system::instance();
 require_capability('local/coursecatalog:manage', $syscontext);
 require_sesskey();
 
-// 1) Call your library function
+// 1) Delete selected subcategories and the page record.
+\local_coursecatalog\manager::delete_selected_categories($id);
 local_coursecatalog_delete_page($id);
 
 // 2) Redirect back with a notice

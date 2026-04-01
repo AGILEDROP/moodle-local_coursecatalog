@@ -44,26 +44,30 @@ class addpage_form extends \moodleform {
      * Define the form elements and structure.
      */
     public function definition() {
+        global $PAGE;
         $mform = $this->_form;
         $isupdate = !empty($this->_customdata['isupdate']);
+
+        // Load JS to auto-reload subcategories when root category changes.
+        $PAGE->requires->js_call_amd('local_coursecatalog/categoryselect', 'init');
 
         // Hidden id (used on edit).
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
-        // 1) Page name
+        // 1) Page name.
         $mform->addElement('text', 'name', get_string('pagename', 'local_coursecatalog'));
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addHelpButton('name', 'pagename', 'local_coursecatalog');
 
-        // 2) Slug
+        // 2) Slug.
         $mform->addElement('text', 'slug', get_string('pageslug', 'local_coursecatalog'));
         $mform->setType('slug', PARAM_ALPHANUMEXT);
         $mform->addRule('slug', null, 'required', null, 'client');
         $mform->addHelpButton('slug', 'pageslug', 'local_coursecatalog');
 
-        // 3) Page description
+        // 3) Page description.
         $editoroptions = ['maxfiles' => 0, 'maxbytes' => 0, 'context' => context_system::instance()];
         $mform->addElement(
             'editor',
@@ -75,7 +79,7 @@ class addpage_form extends \moodleform {
         $mform->setType('pagedescription_editor', PARAM_RAW);
         $mform->addHelpButton('pagedescription_editor', 'pagedescription', 'local_coursecatalog');
 
-        // 4) Category dropdown
+        // 4) Category dropdown.
         $categories = \core_course_category::make_categories_list();
         $mform->addElement(
             'select',
@@ -86,9 +90,74 @@ class addpage_form extends \moodleform {
         $mform->addRule('course_category', null, 'required', null, 'client');
         $mform->addHelpButton('course_category', 'coursecategory', 'local_coursecatalog');
 
+        // No-submit button to reload subcategories when root category changes.
+        $mform->registerNoSubmitButton('updatesubcategories');
+        $mform->addElement(
+            'submit',
+            'updatesubcategories',
+            get_string('updatesubcategories', 'local_coursecatalog'),
+            ['class' => 'd-none']
+        );
+
+        // 5) Include subcategories checkbox.
+        $mform->addElement(
+            'advcheckbox',
+            'includesubcategories',
+            get_string('includesubcategories', 'local_coursecatalog'),
+            get_string('includesubcategories_label', 'local_coursecatalog')
+        );
+        $mform->addHelpButton('includesubcategories', 'includesubcategories', 'local_coursecatalog');
+
+        // 6) Subcategory multi-select — options populated in definition_after_data().
+        $mform->addElement(
+            'autocomplete',
+            'selectedsubcategories',
+            get_string('selectedsubcategories', 'local_coursecatalog'),
+            [],
+            ['multiple' => true]
+        );
+        $mform->addHelpButton('selectedsubcategories', 'selectedsubcategories', 'local_coursecatalog');
+        $mform->hideIf('selectedsubcategories', 'includesubcategories', 'notchecked');
+
         // Submit button.
         $label = $isupdate ? get_string('savechanges') : get_string('addnewpage', 'local_coursecatalog');
         $this->add_action_buttons(true, $label);
+    }
+
+    /**
+     * Populate the subcategory multi-select with children of the selected root category.
+     */
+    public function definition_after_data() {
+        $mform = $this->_form;
+
+        // The getElementValue returns an array for select elements.
+        $rawvalue = $mform->getElementValue('course_category');
+        $rootcategoryid = (int)(is_array($rawvalue) ? reset($rawvalue) : $rawvalue);
+        if ($rootcategoryid <= 0) {
+            return;
+        }
+
+        $rootcategory = \core_course_category::get($rootcategoryid, IGNORE_MISSING);
+        if (!$rootcategory) {
+            return;
+        }
+
+        // Build a flat list of all descendant categories.
+        $allcategories = \core_course_category::make_categories_list();
+        $childrenids = $rootcategory->get_all_children_ids();
+        $subcatoptions = [];
+        foreach ($childrenids as $childid) {
+            if (isset($allcategories[$childid])) {
+                $subcatoptions[$childid] = $allcategories[$childid];
+            }
+        }
+
+        // Populate options directly on the existing element.
+        $element = $mform->getElement('selectedsubcategories');
+        $element->_options = [];
+        foreach ($subcatoptions as $value => $label) {
+            $element->addOption($label, $value);
+        }
     }
 
     /**

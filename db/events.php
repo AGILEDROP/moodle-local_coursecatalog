@@ -30,6 +30,10 @@ $observers = [
         'callback' => '\local_coursecatalog\observer::course_category_deleted',
     ],
     [
+        'eventname' => '\core\event\course_category_updated',
+        'callback' => '\local_coursecatalog\observer::course_category_updated',
+    ],
+    [
         'eventname' => '\core\event\course_created',
         'callback' => '\local_coursecatalog\observer::course_changed',
     ],
