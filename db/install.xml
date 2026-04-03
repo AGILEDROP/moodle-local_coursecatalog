@@ -18,6 +18,7 @@
         <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Explicit display order for catalog pages"/>
         <FIELD NAME="showinprimarynavigation" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether to show the page in the navigation bar or not"/>
         <FIELD NAME="guestaccessible" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether the page is accessible to guests (not logged in users)"/>
+        <FIELD NAME="includesubcategories" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether to include courses from subcategories"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -26,6 +27,20 @@
       <INDEXES>
         <INDEX NAME="course_category_ix" UNIQUE="false" FIELDS="course_category"/>
         <INDEX NAME="sortorder_ix" UNIQUE="false" FIELDS="sortorder"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_coursecatalog_cats" COMMENT="Selected subcategories for a catalog page">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="pageid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="FK to local_coursecatalog.id"/>
+        <FIELD NAME="categoryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="FK to course_categories.id"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="pageid_fk" TYPE="foreign" FIELDS="pageid" REFTABLE="local_coursecatalog" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="pageid_categoryid_uix" UNIQUE="true" FIELDS="pageid,categoryid"/>
       </INDEXES>
     </TABLE>
   </TABLES>

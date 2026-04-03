@@ -29,4 +29,48 @@ $observers = [
         'eventname' => '\core\event\course_category_deleted',
         'callback' => '\local_coursecatalog\observer::course_category_deleted',
     ],
+    [
+        'eventname' => '\core\event\course_category_updated',
+        'callback' => '\local_coursecatalog\observer::course_category_updated',
+    ],
+    [
+        'eventname' => '\core\event\course_created',
+        'callback' => '\local_coursecatalog\observer::course_changed',
+    ],
+    [
+        'eventname' => '\core\event\course_updated',
+        'callback' => '\local_coursecatalog\observer::course_changed',
+    ],
+    [
+        'eventname' => '\core\event\course_deleted',
+        'callback' => '\local_coursecatalog\observer::course_changed',
+    ],
+    [
+        'eventname' => '\core\event\course_content_updated',
+        'callback' => '\local_coursecatalog\observer::course_changed',
+    ],
+    [
+        'eventname' => '\core\event\course_section_created',
+        'callback' => '\local_coursecatalog\observer::course_changed',
+    ],
+    [
+        'eventname' => '\core\event\course_section_updated',
+        'callback' => '\local_coursecatalog\observer::course_changed',
+    ],
+    [
+        'eventname' => '\core\event\course_section_deleted',
+        'callback' => '\local_coursecatalog\observer::course_changed',
+    ],
+    [
+        'eventname' => '\core\event\course_module_created',
+        'callback' => '\local_coursecatalog\observer::course_changed',
+    ],
+    [
+        'eventname' => '\core\event\course_module_updated',
+        'callback' => '\local_coursecatalog\observer::course_changed',
+    ],
+    [
+        'eventname' => '\core\event\course_module_deleted',
+        'callback' => '\local_coursecatalog\observer::course_changed',
+    ],
 ];

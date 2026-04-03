@@ -43,5 +43,57 @@ class observer {
         }
 
         local_coursecatalog_delete_by_category($categoryid);
+        \local_coursecatalog\manager::clean_stale_selections();
+        self::purge_coursecards_cache();
+    }
+
+    /**
+     * Purge all course card caches when a category is updated (e.g. moved).
+     *
+     * When a category moves, the old and new parent trees both change.
+     * The event does not carry the old parent ID, so we purge the entire
+     * course cards cache to guarantee correctness.
+     *
+     * @param \core\event\course_category_updated $event
+     * @return void
+     */
+    public static function course_category_updated(\core\event\course_category_updated $event): void {
+        \local_coursecatalog\manager::clean_stale_selections();
+        self::purge_coursecards_cache();
+    }
+
+    /**
+     * Invalidate the course cards cache when a course or its content changes.
+     *
+     * Handles: course_created, course_updated, course_deleted, course_content_updated,
+     * course_section_created, course_section_updated, course_section_deleted,
+     * course_module_created, course_module_updated, course_module_deleted.
+     *
+     * @param \core\event\base $event
+     * @return void
+     */
+    public static function course_changed(\core\event\base $event): void {
+        $courseid = (int)$event->courseid;
+        if ($courseid <= 0) {
+            return;
+        }
+
+        // Purge entire cache because custom subcategory selections (_sel_ keys)
+        // cannot be enumerated for targeted deletion.
+        self::purge_coursecards_cache();
+    }
+
+    /**
+     * Purge the entire course cards cache.
+     *
+     * Used when changes could affect any page's cached data, e.g. when courses
+     * or categories change and custom subcategory selections make targeted
+     * invalidation impractical.
+     *
+     * @return void
+     */
+    private static function purge_coursecards_cache(): void {
+        $cache = \cache::make('local_coursecatalog', 'coursecards');
+        $cache->purge();
     }
 }

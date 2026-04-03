@@ -11,7 +11,10 @@ Ideal for site home pages, program hubs, and curated category pages, it helps pr
 - Grid + List Views: Displays visible category courses in card-based grid or list layouts.
 - Page Description Support: Add rich text descriptions per catalog page.
 - Course Count Label: Header label is based on the number of visible courses only.
+- Pagination: Course listings are paginated with a configurable number of items per page (default: 6).
+- Application-Level Caching: Course card data is cached for performance, with automatic invalidation on course or category changes.
 - Sorting Controls: Sort listed courses by name (A-Z / Z-A) or content count (few to many / many to few).
+- Selective Subcategory Inclusion: When "Include subcategories" is enabled, optionally pick specific subcategories via an autocomplete multi-select instead of including all descendants.
 - Explicit Page Ordering: Move pages up/down in admin to control catalog-page display order.
 - Visibility Toggles: Enable or disable each catalog page without deleting configuration.
 - Primary Navigation Toggle: Show enabled pages directly in Moodle primary navigation.
@@ -58,6 +61,7 @@ php admin/cli/upgrade.php
    - Slug
    - Page description
    - Course category
+   - Include subcategories (optional — select all or specific subcategories)
 4. Save the page and use action buttons to:
    - View page
    - Move up/down
@@ -85,14 +89,17 @@ Catalog pages are served at:
 - Navigation links are hidden from unauthenticated and guest users unless "Guest access" is also enabled for that page.
 - Navigation and guest access cannot be enabled for disabled pages.
 - When guest access is enabled, unauthenticated visitors can view the page without logging in.
+- Course listings are paginated; a paging bar appears when the number of courses exceeds the per-page limit.
+- When "Include subcategories" is enabled without selecting specific subcategories, all descendant categories are included (backward-compatible default).
 
 ## Notes
 
-- The plugin stores page configuration in `{local_coursecatalog}`.
+- The plugin stores page configuration in `{local_coursecatalog}` and selected subcategory mappings in `{local_coursecatalog_cats}`.
 - `slug` is unique and used as the `?slug=` query parameter to look up and serve the page.
 - `sortorder` controls admin listing order and primary navigation order for enabled pages.
 - `course_category` is indexed for efficient category-based filtering.
 - Linked rows are auto-removed when a course category is deleted.
+- Course card data is cached at the application level (1-hour TTL) and automatically invalidated when courses, sections, or modules are created, updated, or deleted.
 - If UI or navigation updates do not appear immediately, purge Moodle caches.
 
 ## Privacy
