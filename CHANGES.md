@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 1.2.1 (2026110900)
+- Fix catalog page failing to render when a course image file is missing from storage
+- Fix event observer registered for a non-existent course_content_updated event; now listens to course_content_deleted
+- Add missing Moodle boilerplate license header to the coursecatalog template
+- Extend CI matrix to Moodle 5.2 and 5.3 (PHP 8.3 and 8.4)
+
 ## Version 1.2.0 (2026033100)
 - Add pagination for course listings with configurable items per page (default: 6)
 - Add application-level caching for course card data with automatic invalidation on course, section, module, and category changes
