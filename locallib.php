@@ -255,7 +255,14 @@ function local_coursecatalog_build_cards(
 
     $cards = [];
     foreach ($courses as $c) {
-        $courseimageurl = course_summary_exporter::get_course_image($c);
+        try {
+            $courseimageurl = course_summary_exporter::get_course_image($c);
+        } catch (\Throwable $e) {
+            // A broken or missing overview file must not break the whole page.
+            debugging('local_coursecatalog: course image failed for course ' . $c->id . ': ' .
+                $e->getMessage(), DEBUG_DEVELOPER);
+            $courseimageurl = false;
+        }
         $modulescount = local_coursecatalog_count_modules($c->id);
         $activitycount = local_coursecatalog_count_main_activities($c->id);
 
