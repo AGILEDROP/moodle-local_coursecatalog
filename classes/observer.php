@@ -65,7 +65,7 @@ class observer {
     /**
      * Invalidate the course cards cache when a course or its content changes.
      *
-     * Handles: course_created, course_updated, course_deleted, course_content_updated,
+     * Handles: course_created, course_updated, course_deleted, course_content_deleted,
      * course_section_created, course_section_updated, course_section_deleted,
      * course_module_created, course_module_updated, course_module_deleted.
      *
