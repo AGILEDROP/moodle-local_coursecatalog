@@ -46,7 +46,7 @@ $observers = [
         'callback' => '\local_coursecatalog\observer::course_changed',
     ],
     [
-        'eventname' => '\core\event\course_content_updated',
+        'eventname' => '\core\event\course_content_deleted',
         'callback' => '\local_coursecatalog\observer::course_changed',
     ],
     [
