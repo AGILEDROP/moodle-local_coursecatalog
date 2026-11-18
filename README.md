@@ -31,20 +31,25 @@ Ideal for site home pages, program hubs, and curated category pages, it helps pr
 
 ## Installation
 
-### Installing via uploaded ZIP file
+### Composer
 
-1. Log in as an admin and go to `Site administration > Plugins > Install plugins`.
-2. Upload the ZIP file with the plugin code.
-3. Check the plugin validation report and finish the installation.
+Once a stable release is available on Packagist, run this command from the root of your Composer-managed Moodle project:
 
-### Installing manually
+```bash
+composer require agiledrop/moodle-local_coursecatalog
+```
 
-Copy the plugin directory to:
+### ZIP
 
-`{your/moodle/dirroot}/local/coursecatalog`
+Choose a release compatible with your Moodle version. Open **Site administration → Plugins → Install plugins**, upload the plugin ZIP and follow the installation prompts.
 
-Then visit `Site administration > Notifications` to complete installation.
-Alternatively, run:
+### Manual or Git installation
+
+Extract the plugin or check out the matching release from the [GitHub repository](https://github.com/AGILEDROP/moodle-local_coursecatalog) into `local/coursecatalog/` under Moodle's web root. If your project uses a `public/` web root, the path from the project root is `public/local/coursecatalog/`. The directory should contain the plugin's `version.php`.
+
+### Complete the installation
+
+After installing the files with Composer, manually or with Git, open **Site administration → Notifications**. Alternatively, run the following command from the Moodle project root:
 
 ```bash
 php admin/cli/upgrade.php
