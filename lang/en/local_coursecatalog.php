@@ -81,7 +81,7 @@ $string['pagenotenabled'] = 'Sorry, that page is not available.';
 $string['pagenotenableduser'] = 'Sorry, this page is not available.';
 $string['pagerenderfailed'] = 'This page could not be displayed. Please contact your administrator.';
 $string['pageslug'] = 'Slug';
-$string['pageslug_help'] = 'A unique identifier for this page. Used as the <code>slug</code> query parameter in the page URL (e.g. <code>view.php?slug=your-slug</code>). Allowed characters: letters, numbers, hyphens, and underscores.';
+$string['pageslug_help'] = 'A unique identifier used in the page URL, for example <code>/local_coursecatalog/your-slug</code> with the Moodle Router configured, or <code>/local/coursecatalog/view.php?slug=your-slug</code> with legacy URLs. Allowed characters: letters, numbers, hyphens, and underscores.';
 $string['pluginname'] = 'Course catalog';
 $string['previewdisablednotice']   = '*** Preview mode *** This page is currently disabled.';
 $string['privacy:metadata'] = 'The Course catalog plugin does not store any personal data.';

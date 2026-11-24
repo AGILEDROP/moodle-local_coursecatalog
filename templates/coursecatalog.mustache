@@ -34,6 +34,7 @@
         "sort": {
             "action": "https://example.com/local/coursecatalog/view.php",
             "slug": "courses",
+            "hasqueryslug": true,
             "options": [
                 {"value": "name_asc", "label": "Name (A-Z)", "selected": true}
             ]
@@ -76,7 +77,12 @@
         </div>
         <span class="vr mx-2"></span>
         <form method="get" action="{{sort.action}}" class="d-flex align-items-center gap-2 px-3">
-            <input type="hidden" name="slug" value="{{sort.slug}}">
+            {{#sort.hasqueryslug}}
+                <input type="hidden" name="slug" value="{{sort.slug}}">
+            {{/sort.hasqueryslug}}
+            {{#sort.perpage}}
+                <input type="hidden" name="perpage" value="{{sort.perpage}}">
+            {{/sort.perpage}}
             <input type="hidden" name="view" value="{{view}}">
             <label for="sortby-select" class="form-label mb-0 small text-nowrap">
                 {{#str}}sortby, local_coursecatalog{{/str}}

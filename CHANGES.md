@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 1.3.0 (2026111901)
+- Use short catalog URLs on Moodle 5.0 and later when the Router is configured, with existing links supported on all versions.
+
 ## Version 1.2.1 (2026110900)
 - Fix catalog page failing to render when a course image file is missing from storage
 - Fix event observer registered for a non-existent course_content_updated event; now listens to course_content_deleted

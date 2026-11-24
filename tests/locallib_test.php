@@ -16,6 +16,9 @@
 
 namespace local_coursecatalog;
 
+use PHPUnit\Framework\Attributes\CoversFunction;
+use PHPUnit\Framework\Attributes\CoversMethod;
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/../locallib.php');
@@ -29,7 +32,181 @@ require_once(__DIR__ . '/../locallib.php');
  * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+#[CoversFunction('local_coursecatalog_build_sort_context')]
+#[CoversFunction('local_coursecatalog_delete_by_category')]
+#[CoversFunction('local_coursecatalog_display_cards')]
+#[CoversFunction('local_coursecatalog_get_all_pages')]
+#[CoversFunction('local_coursecatalog_get_display_options')]
+#[CoversFunction('local_coursecatalog_get_page_url')]
+#[CoversFunction('local_coursecatalog_get_primary_navigation_pages')]
+#[CoversFunction('local_coursecatalog_move_page')]
+#[CoversFunction('local_coursecatalog_normalise_sortorder')]
+#[CoversMethod(catalog_page::class, 'render')]
+#[CoversMethod(hook_callbacks::class, 'extend_primary_navigation')]
+#[CoversMethod(observer::class, 'course_category_deleted')]
 final class locallib_test extends \advanced_testcase {
+    /**
+     * Catalog links use the short route only where Moodle supports and enables it.
+     */
+    public function test_catalog_page_urls_follow_router_configuration(): void {
+        global $CFG;
+
+        $this->resetAfterTest();
+        $slug = 'test-page_1';
+        $params = ['sort' => 'name_desc', 'view' => 'list', 'page' => 1, 'perpage' => 3];
+
+        foreach ([false, true] as $routerconfigured) {
+            $CFG->routerconfigured = $routerconfigured;
+            $short = $CFG->version >= 2025041400 && $routerconfigured;
+            $expectedpath = $short ? '/local_coursecatalog/' . $slug : '/local/coursecatalog/view.php';
+            $url = \local_coursecatalog_get_page_url($slug, $params);
+
+            $this->assertSame($CFG->wwwroot . $expectedpath, $url->out_omit_querystring());
+            $this->assertSame($short ? null : $slug, $url->get_param('slug'));
+            foreach ($params as $name => $value) {
+                $this->assertSame((string)$value, (string)$url->get_param($name));
+            }
+
+            $sort = \local_coursecatalog_build_sort_context($slug, 'name_desc', 'list', 3);
+            $this->assertSame($CFG->wwwroot . $expectedpath, $sort['action']);
+            $this->assertSame(!$short, $sort['hasqueryslug']);
+            $this->assertSame($short ? null : $slug, $sort['slug']);
+            $this->assertSame(3, $sort['perpage']);
+        }
+    }
+
+    /**
+     * A guest can render a guest-accessible catalog using legacy links.
+     */
+    public function test_render_guest_catalog_without_router(): void {
+        global $CFG, $DB;
+
+        $this->resetAfterTest();
+        $CFG->routerconfigured = false;
+        $this->setGuestUser();
+
+        $category = self::getDataGenerator()->create_category();
+        $page = $this->build_catalog_page_record($category->id, 'Guest catalog', 'guest-catalog', guestaccessible: 1);
+        $DB->insert_record('local_coursecatalog', $page);
+
+        $html = catalog_page::render($page->slug);
+        $this->assertStringContainsString('Guest catalog', $html);
+        $this->assertStringContainsString('/local/coursecatalog/view.php?slug=guest-catalog', $html);
+        $this->assertStringContainsString('name="slug" value="guest-catalog"', $html);
+    }
+
+    /**
+     * A guest cannot render a catalog that requires a registered user.
+     */
+    public function test_render_rejects_guest_for_private_catalog(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setGuestUser();
+
+        $category = self::getDataGenerator()->create_category();
+        $page = $this->build_catalog_page_record($category->id, 'Private catalog', 'private-catalog');
+        $DB->insert_record('local_coursecatalog', $page);
+
+        $this->expectException(\moodle_exception::class);
+        $this->expectExceptionMessage(get_string('noguest', 'error'));
+        catalog_page::render($page->slug);
+    }
+
+    /**
+     * A disabled catalog is unavailable to a regular user.
+     */
+    public function test_render_disabled_catalog_for_regular_user(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->setUser(self::getDataGenerator()->create_user());
+
+        $category = self::getDataGenerator()->create_category();
+        $page = $this->build_catalog_page_record($category->id, 'Disabled catalog', 'disabled-catalog', isenabled: 0);
+        $DB->insert_record('local_coursecatalog', $page);
+
+        $html = catalog_page::render($page->slug);
+        $this->assertStringContainsString(get_string('pagenotenableduser', 'local_coursecatalog'), $html);
+        $this->assertStringNotContainsString('id="sortby-select"', $html);
+    }
+
+    /**
+     * A manager can preview a disabled catalog and navigate its results.
+     */
+    public function test_render_disabled_catalog_preview(): void {
+        global $CFG, $DB;
+
+        $this->resetAfterTest();
+        $CFG->routerconfigured = true;
+        $this->setAdminUser();
+
+        $category = self::getDataGenerator()->create_category();
+        $page = $this->build_catalog_page_record($category->id, 'Disabled catalog', 'disabled-catalog', isenabled: 0);
+        $DB->insert_record('local_coursecatalog', $page);
+        $firstcourse = self::getDataGenerator()->create_course(['category' => $category->id, 'fullname' => 'Alpha course']);
+        $secondcourse = self::getDataGenerator()->create_course(['category' => $category->id, 'fullname' => 'Beta course']);
+
+        $originalget = $_GET;
+        $_GET = ['sort' => 'name_desc', 'view' => 'list', 'page' => '1', 'perpage' => '1'];
+        try {
+            $html = catalog_page::render($page->slug);
+        } finally {
+            $_GET = $originalget;
+        }
+
+        $this->assertStringContainsString(get_string('previewdisablednotice', 'local_coursecatalog'), $html);
+        $this->assertStringContainsString('id="sortby-select"', $html);
+        $this->assertStringContainsString($firstcourse->fullname, $html);
+        $this->assertStringNotContainsString($secondcourse->fullname, $html);
+        $this->assertStringContainsString('view=grid', $html);
+        $this->assertStringContainsString('name="perpage" value="1"', $html);
+        if ($CFG->version >= 2025041400) {
+            $this->assertStringContainsString('/local_coursecatalog/disabled-catalog', $html);
+            $this->assertStringNotContainsString('name="slug" value="disabled-catalog"', $html);
+        }
+    }
+
+    /**
+     * The page URL and rendered controls use the same normalised display options.
+     */
+    public function test_render_normalises_display_options(): void {
+        global $CFG, $DB, $PAGE;
+
+        $this->resetAfterTest();
+        $CFG->routerconfigured = false;
+        $this->setAdminUser();
+
+        $category = self::getDataGenerator()->create_category();
+        $page = $this->build_catalog_page_record($category->id, 'Display options catalog', 'display-options');
+        $DB->insert_record('local_coursecatalog', $page);
+        $course = self::getDataGenerator()->create_course(['category' => $category->id, 'fullname' => 'Catalog course']);
+
+        $originalget = $_GET;
+        $_GET = ['perpage' => '1000', 'page' => '-2', 'view' => 'foo', 'sort' => 'foo'];
+        try {
+            $html = catalog_page::render($page->slug);
+        } finally {
+            $_GET = $originalget;
+        }
+
+        $this->assertSame('name_asc', $PAGE->url->get_param('sort'));
+        $this->assertSame('grid', $PAGE->url->get_param('view'));
+        $this->assertSame('0', (string)$PAGE->url->get_param('page'));
+        $this->assertSame('100', (string)$PAGE->url->get_param('perpage'));
+        $this->assertStringContainsString($course->fullname, $html);
+        $this->assertStringContainsString('name="view" value="grid"', $html);
+        $this->assertStringContainsString('name="perpage" value="100"', $html);
+        $this->assertStringContainsString('<option value="name_asc" selected>', $html);
+        $listurl = new \moodle_url('/local/coursecatalog/view.php', [
+            'slug' => $page->slug,
+            'view' => 'list',
+            'sort' => 'name_asc',
+            'perpage' => 100,
+        ]);
+        $this->assertStringContainsString('href="' . $listurl->out() . '"', $html);
+    }
+
     /**
      * Build a catalog page DB record fixture.
      *
@@ -69,8 +246,6 @@ final class locallib_test extends \advanced_testcase {
 
     /**
      * Verify category cleanup helper removes only the target category rows.
-     *
-     * @covers ::local_coursecatalog_delete_by_category
      */
     public function test_local_coursecatalog_delete_by_category(): void {
         global $DB;
@@ -99,8 +274,6 @@ final class locallib_test extends \advanced_testcase {
 
     /**
      * Verify pages are returned in explicit sort order.
-     *
-     * @covers ::local_coursecatalog_get_all_pages
      */
     public function test_local_coursecatalog_get_all_pages_orders_by_sortorder(): void {
         global $DB;
@@ -142,9 +315,6 @@ final class locallib_test extends \advanced_testcase {
 
     /**
      * Verify move helper swaps a page with its adjacent neighbour.
-     *
-     * @covers ::local_coursecatalog_move_page
-     * @covers ::local_coursecatalog_normalise_sortorder
      */
     public function test_local_coursecatalog_move_page_swaps_adjacent_sortorder(): void {
         global $DB;
@@ -188,8 +358,6 @@ final class locallib_test extends \advanced_testcase {
 
     /**
      * Verify catalog rendering includes visible courses and skips hidden ones.
-     *
-     * @covers ::local_coursecatalog_display_cards
      */
     public function test_local_coursecatalog_display_cards_honours_course_visibility(): void {
         global $DB;
@@ -228,8 +396,6 @@ final class locallib_test extends \advanced_testcase {
 
     /**
      * Verify observer callback removes only rows for the deleted category id.
-     *
-     * @covers \local_coursecatalog\observer::course_category_deleted
      */
     public function test_observer_course_category_deleted_removes_orphans(): void {
         global $DB;
@@ -264,9 +430,6 @@ final class locallib_test extends \advanced_testcase {
 
     /**
      * Verify primary nav callback adds only eligible pages.
-     *
-     * @covers \local_coursecatalog\hook_callbacks::extend_primary_navigation
-     * @covers ::local_coursecatalog_get_primary_navigation_pages
      */
     public function test_extend_primary_navigation_adds_only_eligible_pages(): void {
         global $DB;

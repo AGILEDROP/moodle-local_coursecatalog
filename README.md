@@ -78,9 +78,12 @@ php admin/cli/upgrade.php
 
 ### Front-end page URL
 
-Catalog pages are served at:
+On Moodle 5.0 and later with the Moodle Router configured, catalog links use
+`/local_coursecatalog/your-slug`.
 
-`/local/coursecatalog/view.php?slug=your-slug`
+On Moodle 4.5 or when the Router is not configured, catalog links use
+`/local/coursecatalog/view.php?slug=your-slug`. Existing links to this address
+work on all supported versions.
 
 ### Behavior notes
 

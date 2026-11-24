@@ -24,108 +24,11 @@
  */
 
 require_once(__DIR__ . '/../../config.php'); // phpcs:ignore moodle.Files.RequireLogin.Missing
-require_once($CFG->libdir . '/adminlib.php');
-require_once(__DIR__ . '/locallib.php');
 
 $slug = required_param('slug', PARAM_ALPHANUMEXT);
-global $DB, $OUTPUT;
-
-// 1) Load the record (needed before login decision).
-$page = $DB->get_record(
-    'local_coursecatalog',
-    ['slug' => $slug],
-    '*',
-    MUST_EXIST
-);
-
-// 2) Authentication: guest-accessible pages allow auto guest login, others require real login.
-if (!empty($page->guestaccessible)) {
-    require_login(null, true);
-} else {
-    require_login();
-    if (isguestuser()) {
-        throw new moodle_exception('noguest');
-    }
+$html = \local_coursecatalog\catalog_page::render($slug);
+if ($html === null) {
+    http_response_code(404);
+    $html = \local_coursecatalog\catalog_page::render_not_found($slug);
 }
-
-// 3) Resolve category context (throws if category was deleted).
-$categoryid = (int)$page->course_category;
-$catcontext = context_coursecat::instance($categoryid, IGNORE_MISSING);
-
-if (!$catcontext) {
-    throw new moodle_exception('missingcategorypage', 'local_coursecatalog');
-}
-
-// 4) Enforce view capability.
-require_capability('local/coursecatalog:view', context_system::instance());
-
-// 5) Handle the “disabled” flag
-if (empty($page->isenabled)) {
-    // 5a) Ordinary users get a friendly landing page
-    if (!has_capability('local/coursecatalog:manage', context_system::instance())) {
-        $PAGE->set_url(new moodle_url('/local/coursecatalog/view.php', ['slug' => $slug]));
-        $PAGE->set_context($catcontext);
-        $PAGE->set_primary_active_tab('local_coursecatalog_' . $page->id);
-        $PAGE->set_title(get_string('pluginname', 'local_coursecatalog'));
-        $PAGE->set_heading(get_string('pluginname', 'local_coursecatalog'));
-
-        echo $OUTPUT->header();
-        echo $OUTPUT->notification(
-            get_string('pagenotenableduser', 'local_coursecatalog'),
-            \core\output\notification::NOTIFY_INFO
-        );
-        echo $OUTPUT->footer();
-        exit;
-    }
-    // 5b) Managers see a banner but can continue
-    $showpreviewbanner = true;
-} else {
-    $showpreviewbanner = false;
-}
-
-// 6) Normal page rendering
-$sort = optional_param('sort', 'name_asc', PARAM_ALPHANUMEXT);
-$view = optional_param('view', 'grid', PARAM_ALPHA);
-$currentpage = optional_param('page', 0, PARAM_INT);
-$perpage = optional_param('perpage', LOCAL_COURSECATALOG_PERPAGE_DEFAULT, PARAM_INT);
-$urlparams = ['slug' => $slug, 'sort' => $sort, 'view' => $view, 'page' => $currentpage];
-if ($perpage != LOCAL_COURSECATALOG_PERPAGE_DEFAULT) {
-    $urlparams['perpage'] = $perpage;
-}
-$url = new moodle_url('/local/coursecatalog/view.php', $urlparams);
-$PAGE->set_url($url);
-$PAGE->set_secondary_navigation(false);
-$PAGE->set_context($catcontext);
-$PAGE->set_primary_active_tab('local_coursecatalog_' . $page->id);
-$PAGE->set_title(format_string($page->name));
-$PAGE->set_heading(format_string($page->name));
-$PAGE->navbar->add(
-    $page->name ?? $page->slug,
-    $url,
-    'TYPE_COURSE_CATEGORY_PAGE'
-);
-$PAGE->navbar->make_active();
-
-echo $OUTPUT->header();
-
-// 7) If a preview banner is needed:
-if (!empty($showpreviewbanner)) {
-    echo $OUTPUT->notification(
-        get_string('previewdisablednotice', 'local_coursecatalog'),
-        \core\output\notification::NOTIFY_WARNING
-    );
-}
-
-// 8) Output the HTML
-try {
-    $html = local_coursecatalog_display_cards($page);
-    echo $html;
-} catch (\Throwable $e) {
-    echo $OUTPUT->notification(
-        get_string('pagerenderfailed', 'local_coursecatalog'),
-        \core\output\notification::NOTIFY_ERROR
-    );
-    debugging('local_coursecatalog: failed to render page slug=' . $slug . ': ' . $e->getMessage(), DEBUG_DEVELOPER);
-}
-
-echo $OUTPUT->footer();
+echo $html;

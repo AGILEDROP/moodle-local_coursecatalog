@@ -27,27 +27,66 @@ use core_course\external\course_summary_exporter;
 /** @var int Default number of courses per page. */
 define('LOCAL_COURSECATALOG_PERPAGE_DEFAULT', 6);
 
+/** @var string[] Supported sort options in display order. */
+const LOCAL_COURSECATALOG_SORT_OPTIONS = ['name_asc', 'name_desc', 'modules_asc', 'modules_desc'];
+
+/**
+ * Build the public URL for a catalog page.
+ *
+ * @param string $slug Catalog page slug.
+ * @param array $params Display options to include in the query string.
+ * @return moodle_url
+ */
+function local_coursecatalog_get_page_url(string $slug, array $params = []): moodle_url {
+    global $CFG;
+
+    if ($CFG->version >= 2025041400 && !empty($CFG->routerconfigured)) {
+        return \core\router\util::get_path_for_callable(
+            [\local_coursecatalog\route\controller\catalog::class, 'view'],
+            ['slug' => $slug],
+            $params,
+        );
+    }
+
+    return new moodle_url('/local/coursecatalog/view.php', ['slug' => $slug] + $params);
+}
+
+/**
+ * Read and normalise the catalog display options from the request.
+ *
+ * @return array{sort: string, view: string, page: int, perpage: int}
+ */
+function local_coursecatalog_get_display_options(): array {
+    $sort = optional_param('sort', 'name_asc', PARAM_ALPHANUMEXT);
+    $view = optional_param('view', 'grid', PARAM_ALPHA);
+    $page = optional_param('page', 0, PARAM_INT);
+    $perpage = optional_param('perpage', LOCAL_COURSECATALOG_PERPAGE_DEFAULT, PARAM_INT);
+
+    return [
+        'sort' => in_array($sort, LOCAL_COURSECATALOG_SORT_OPTIONS, true) ? $sort : 'name_asc',
+        'view' => in_array($view, ['grid', 'list'], true) ? $view : 'grid',
+        'page' => max(0, $page),
+        'perpage' => max(1, min($perpage, 100)),
+    ];
+}
+
 /**
  * Display the cards for one category-page record with pagination.
  *
  * @param stdClass $page A record from {local_coursecatalog}, with at least id, course_category, name, slug.
+ * @param array|null $options Normalised display options, read from the request when omitted.
  * @return string Rendered HTML.
  * @throws \core\exception\moodle_exception
  * @throws coding_exception
  */
-function local_coursecatalog_display_cards(stdClass $page): string {
+function local_coursecatalog_display_cards(stdClass $page, ?array $options = null): string {
     global $OUTPUT;
 
-    $sort = optional_param('sort', 'name_asc', PARAM_ALPHANUMEXT);
-    $view = optional_param('view', 'grid', PARAM_ALPHA);
-    $currentpage = optional_param('page', 0, PARAM_INT);
-    $perpage = optional_param('perpage', LOCAL_COURSECATALOG_PERPAGE_DEFAULT, PARAM_INT);
-
-    if (!in_array($view, ['grid', 'list'], true)) {
-        $view = 'grid';
-    }
-    $currentpage = max(0, $currentpage);
-    $perpage = max(1, min($perpage, 100));
+    $options ??= local_coursecatalog_get_display_options();
+    $sort = $options['sort'];
+    $view = $options['view'];
+    $currentpage = $options['page'];
+    $perpage = $options['perpage'];
 
     $descriptioncontext = \context_coursecat::instance(
         (int)$page->course_category,
@@ -62,28 +101,25 @@ function local_coursecatalog_display_cards(stdClass $page): string {
     $categoryid = (int)$page->course_category;
     $category = \core_course_category::get($categoryid, IGNORE_MISSING);
 
-    $baseparams = ['slug' => $page->slug, 'sort' => $sort, 'view' => $view];
+    $baseparams = ['sort' => $sort, 'view' => $view];
+    if ($perpage !== LOCAL_COURSECATALOG_PERPAGE_DEFAULT) {
+        $baseparams['perpage'] = $perpage;
+    }
+    $ctx = (object)[
+        'pagedescription' => $formatteddescription,
+        'sort' => local_coursecatalog_build_sort_context($page->slug, $sort, $view, $baseparams['perpage'] ?? null),
+        'view' => $view,
+        'isgrid' => ($view === 'grid'),
+        'islist' => ($view === 'list'),
+        'gridurl' => local_coursecatalog_get_page_url($page->slug, ['view' => 'grid'] + $baseparams)->out(false),
+        'listurl' => local_coursecatalog_get_page_url($page->slug, ['view' => 'list'] + $baseparams)->out(false),
+    ];
 
     if (!$category) {
-        $ctx = (object)[
-            'courses' => [],
-            'coursecount' => local_coursecatalog_get_course_count_string(0),
-            'pagedescription' => $formatteddescription,
-            'sort' => local_coursecatalog_build_sort_context($page->slug, $sort, $view),
-            'view' => $view,
-            'isgrid' => ($view === 'grid'),
-            'islist' => ($view === 'list'),
-            'gridurl' => (new moodle_url(
-                '/local/coursecatalog/view.php',
-                array_merge($baseparams, ['view' => 'grid'])
-            ))->out(false),
-            'listurl' => (new moodle_url(
-                '/local/coursecatalog/view.php',
-                array_merge($baseparams, ['view' => 'list'])
-            ))->out(false),
-            'pagingbar' => '',
-            'missingcategory' => true,
-        ];
+        $ctx->courses = [];
+        $ctx->coursecount = local_coursecatalog_get_course_count_string(0);
+        $ctx->pagingbar = '';
+        $ctx->missingcategory = true;
         return $OUTPUT->render_from_template('local_coursecatalog/coursecatalog', $ctx);
     }
 
@@ -101,34 +137,16 @@ function local_coursecatalog_display_cards(stdClass $page): string {
     $totalcount = count($allcards);
 
     // 4) Slice for current page.
-    $pagecards = array_slice($allcards, $currentpage * $perpage, $perpage);
+    $offset = $currentpage > intdiv($totalcount, $perpage) ? $totalcount : $currentpage * $perpage;
+    $pagecards = array_slice($allcards, $offset, $perpage);
 
     // 5) Add user-specific enrollment data to the sliced set only.
     $pagecards = local_coursecatalog_add_enrollment_data($pagecards);
 
-    // 6) Build paging bar.
-    $pagingbarurl = new moodle_url('/local/coursecatalog/view.php', $baseparams);
-    $pagingbar = $OUTPUT->paging_bar($totalcount, $currentpage, $perpage, $pagingbarurl);
-
-    // 7) Build the Mustache context.
-    $ctx = (object)[
-        'courses' => $pagecards,
-        'coursecount' => local_coursecatalog_get_course_count_string($totalcount),
-        'pagedescription' => $formatteddescription,
-        'sort' => local_coursecatalog_build_sort_context($page->slug, $sort, $view),
-        'view' => $view,
-        'isgrid' => ($view === 'grid'),
-        'islist' => ($view === 'list'),
-        'gridurl' => (new moodle_url(
-            '/local/coursecatalog/view.php',
-            array_merge($baseparams, ['view' => 'grid'])
-        ))->out(false),
-        'listurl' => (new moodle_url(
-            '/local/coursecatalog/view.php',
-            array_merge($baseparams, ['view' => 'list'])
-        ))->out(false),
-        'pagingbar' => $pagingbar,
-    ];
+    $pagingbarurl = local_coursecatalog_get_page_url($page->slug, $baseparams);
+    $ctx->pagingbar = $OUTPUT->paging_bar($totalcount, $currentpage, $perpage, $pagingbarurl);
+    $ctx->courses = $pagecards;
+    $ctx->coursecount = local_coursecatalog_get_course_count_string($totalcount);
 
     return $OUTPUT->render_from_template('local_coursecatalog/coursecatalog', $ctx);
 }
@@ -525,30 +543,33 @@ function local_coursecatalog_get_course_count_string(int $coursescount): string 
 /**
  * Build Mustache context for the "Sort by" UI.
  *
- * @param string $slug Current page slug (kept in a hidden field).
+ * @param string $slug Current page slug.
  * @param string $current Current sort token (e.g. "name_asc").
  * @param string $view Current view mode ('grid' or 'list').
+ * @param int|null $perpage Selected page size, when different from the default.
  * @return array
  */
-function local_coursecatalog_build_sort_context(string $slug, string $current, string $view = 'grid'): array {
-    $baseurl = new moodle_url('/local/coursecatalog/view.php', ['slug' => $slug]);
-    $options = [
-        'name_asc' => get_string('sort_name_asc', 'local_coursecatalog'),
-        'name_desc' => get_string('sort_name_desc', 'local_coursecatalog'),
-        'modules_asc' => get_string('sort_modules_asc', 'local_coursecatalog'),
-        'modules_desc' => get_string('sort_modules_desc', 'local_coursecatalog'),
-    ];
-
+function local_coursecatalog_build_sort_context(
+    string $slug,
+    string $current,
+    string $view = 'grid',
+    ?int $perpage = null,
+): array {
+    $baseurl = local_coursecatalog_get_page_url($slug);
+    $queryslug = $baseurl->get_param('slug');
+    $baseurl->remove_params('slug');
     $ctx = [
         'action' => $baseurl->out(false),
-        'slug' => $slug,
+        'slug' => $queryslug,
+        'hasqueryslug' => $queryslug !== null,
         'view' => $view,
+        'perpage' => $perpage,
         'options' => [],
     ];
-    foreach ($options as $value => $label) {
+    foreach (LOCAL_COURSECATALOG_SORT_OPTIONS as $value) {
         $ctx['options'][] = [
             'value' => $value,
-            'label' => $label,
+            'label' => get_string('sort_' . $value, 'local_coursecatalog'),
             'selected' => ($value === $current),
         ];
     }
@@ -569,8 +590,7 @@ function local_coursecatalog_build_sort_context(string $slug, string $current, s
  * @return stdClass[] Sorted list.
  */
 function local_coursecatalog_sort_courses(array $items, string $sort): array {
-    $allowed = ['name_asc', 'name_desc', 'modules_asc', 'modules_desc'];
-    if (!in_array($sort, $allowed, true)) {
+    if (!in_array($sort, LOCAL_COURSECATALOG_SORT_OPTIONS, true)) {
         $sort = 'name_asc';
     }
     [$field, $dir] = array_pad(explode('_', $sort, 2), 2, 'asc');
