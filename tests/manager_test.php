@@ -16,6 +16,8 @@
 
 namespace local_coursecatalog;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/../locallib.php');
@@ -28,8 +30,8 @@ require_once(__DIR__ . '/../locallib.php');
  * @copyright Agiledrop, 2026 <developer@agiledrop.com>
  * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers    \local_coursecatalog\manager
  */
+#[CoversClass(manager::class)]
 final class manager_test extends \advanced_testcase {
     /**
      * Insert a catalog page fixture directly into the DB.

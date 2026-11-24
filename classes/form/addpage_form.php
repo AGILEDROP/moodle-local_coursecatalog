@@ -22,6 +22,7 @@
  * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 namespace local_coursecatalog\form;
 
 use context_system;

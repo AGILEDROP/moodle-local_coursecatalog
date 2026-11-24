@@ -184,7 +184,7 @@ foreach ($pages as $index => $page) {
 
     echo html_writer::start_div();
     // 1) View page.
-    $viewurl = new moodle_url('/local/coursecatalog/view.php', ['slug' => $page->slug]);
+    $viewurl = local_coursecatalog_get_page_url($page->slug);
     echo html_writer::link(
         $viewurl,
         get_string('viewpage', 'local_coursecatalog'),

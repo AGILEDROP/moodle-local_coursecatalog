@@ -54,7 +54,7 @@ class hook_callbacks {
                 continue;
             }
 
-            $url = new \moodle_url('/local/coursecatalog/view.php', ['slug' => $page->slug]);
+            $url = local_coursecatalog_get_page_url($page->slug);
 
             $primaryview->add(
                 format_string($page->name, true, ['context' => $context]),

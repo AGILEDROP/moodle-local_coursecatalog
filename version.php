@@ -22,10 +22,11 @@
  * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_coursecatalog';
-$plugin->release = '1.2.1';
-$plugin->version = 2026110900;
+$plugin->release = '1.3.0';
+$plugin->version = 2026111901;
 $plugin->requires = 2024100705;
 $plugin->maturity = MATURITY_STABLE;
