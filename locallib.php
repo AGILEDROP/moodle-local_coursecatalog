@@ -22,6 +22,7 @@
  * @author    Matej Pal <matej.pal@agiledrop.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 use core_course\external\course_summary_exporter;
 
 /** @var int Default number of courses per page. */
